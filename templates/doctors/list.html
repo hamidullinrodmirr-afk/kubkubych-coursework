@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Врачи{% endblock %}
+
+{% block content %}
+<section class="hero hero--red">
+    <div class="container">
+        <div class="hero__inner">
+            <div class="hero__content">
+                <h1>Наши<br>Ветеринары</h1>
+                <p>Команда опытных специалистов, готовых позаботиться о здоровье вашего питомца.</p>
+            </div>
+            <div class="hero__image">
+                <img src="https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=600&h=500&fit=crop" alt="Ветеринар">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="ФИО или специальность">
+            <button class="search-btn" onclick="applyFilters()">Найти</button>
+        </div>
+
+        <div class="layout-sidebar">
+            <aside>
+                <div class="specialties-box">
+                    <div class="specialties-box__title">Специализации</div>
+                    <ul class="specialties-list" id="specList">
+                        <li class="active" data-spec="">Все специализации</li>
+                    </ul>
+                </div>
+            </aside>
+
+            <div>
+                <div class="cards-grid" id="doctorsGrid">
+                    <div class="loading"><div class="spinner"></div>Загрузка...</div>
+                </div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentSpec = new URLSearchParams(location.search).get('specialty') || '';
+
+async function loadSpecialties() {
+    const data = await API.get('/doctors/specialties/');
+    if (!data || !data.results) return;
+    const list = document.getElementById('specList');
+    data.results.forEach(s => {
+        const li = document.createElement('li');
+        li.textContent = s.name;
+        li.dataset.spec = s.name;
+        if (s.name === currentSpec) li.classList.add('active');
+        li.addEventListener('click', () => {
+            document.querySelectorAll('.specialties-list li').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+            currentSpec = s.name;
+            applyFilters();
+        });
+        list.appendChild(li);
+    });
+    if (!currentSpec) list.firstElementChild.classList.add('active');
+}
+
+async function loadDoctors(page = 1) {
+    const grid = document.getElementById('doctorsGrid');
+    const search = document.getElementById('searchInput').value;
+    let url = `/doctors/?page=${page}`;
+    if (currentSpec) url += `&specialty=${encodeURIComponent(currentSpec)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+    const data = await API.get(url);
+
+    if (!data || !data.results || data.results.length === 0) {
+        grid.innerHTML = '<p style="text-align:center;color:var(--gray);padding:40px;">Врачи не найдены</p>';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+    }
+
+    grid.innerHTML = data.results.map(doc => `
+        <a href="/doctors/${doc.id}/" class="card">
+            <img class="card__image"
+                src="${doc.photo || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=300&fit=crop'}"
+                alt="${doc.full_name}">
+            <div class="card__body">
+                <div class="card__title">${doc.full_name}</div>
+                <div class="card__subtitle">${doc.specialties.map(s => s.name).join(', ')}</div>
+                <div class="card__meta">
+                    <span class="card__rating"><span class="star">★</span> ${doc.avg_rating}</span>
+                    <span class="card__reviews">${doc.reviews_count} отзывов</span>
+                </div>
+                <div class="card__footer">
+                    <span class="card__price">${Number(doc.consultation_price).toLocaleString('ru-RU')} ₽</span>
+                    <span class="btn btn--sm btn--navy">Подробнее</span>
+                </div>
+            </div>
+        </a>
+    `).join('');
+
+    // Pagination
+    const pag = document.getElementById('pagination');
+    const totalPages = Math.ceil(data.count / 12);
+    if (totalPages > 1) {
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) {
+            html += i === page
+                ? `<span class="current">${i}</span>`
+                : `<a href="#" onclick="loadDoctors(${i});return false;">${i}</a>`;
+        }
+        pag.innerHTML = html;
+    } else {
+        pag.innerHTML = '';
+    }
+}
+
+function applyFilters() { loadDoctors(1); }
+
+document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') applyFilters();
+});
+
+loadSpecialties();
+loadDoctors();
+</script>
+{% endblock %}

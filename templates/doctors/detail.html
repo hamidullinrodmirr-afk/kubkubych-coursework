@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Врач{% endblock %}
+
+{% block content %}
+<section class="hero hero--teal">
+    <div class="container">
+        <div class="hero__inner">
+            <div class="hero__content">
+                <h1 id="heroTitle">Ветеринар</h1>
+                <p id="heroSubtitle"></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="doctor-info" id="doctorInfo">
+            <div class="loading"><div class="spinner"></div>Загрузка...</div>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <h2 style="color: var(--teal); margin-bottom: 20px;">Оказываемые услуги</h2>
+            <div class="cards-grid" id="servicesGrid"></div>
+        </div>
+
+        <div style="margin-top: 60px;">
+            <h2 style="color: var(--teal); margin-bottom: 20px;">Отзывы</h2>
+            <div class="reviews-grid" id="reviewsGrid"></div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="/appointment/?doctor={{ doctor_id }}" class="btn btn--green">Записаться на приём</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const doctorId = {{ doctor_id }};
+
+async function loadDoctor() {
+    const doc = await API.get(`/doctors/${doctorId}/`);
+    if (!doc) return;
+
+    document.getElementById('heroTitle').textContent = doc.full_name;
+    document.getElementById('heroSubtitle').textContent = doc.specialties.map(s => s.name).join(', ');
+    document.title = `${doc.full_name} — PetCare`;
+
+    document.getElementById('doctorInfo').innerHTML = `
+        <img class="doctor-info__photo"
+            src="${doc.photo || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=450&fit=crop'}"
+            alt="${doc.full_name}">
+        <div class="doctor-info__details">
+            <h2>${doc.full_name}</h2>
+            <div class="doctor-info__specialty">${doc.specialties.map(s => s.name).join(', ')}</div>
+            <div class="doctor-info__stats">
+                <div class="doctor-info__stat">
+                    <div class="doctor-info__stat-value">★ ${doc.avg_rating}</div>
+                    <div class="doctor-info__stat-label">Рейтинг</div>
+                </div>
+                <div class="doctor-info__stat">
+                    <div class="doctor-info__stat-value">${doc.reviews_count}</div>
+                    <div class="doctor-info__stat-label">Отзывов</div>
+                </div>
+                <div class="doctor-info__stat">
+                    <div class="doctor-info__stat-value">${doc.experience_years} лет</div>
+                    <div class="doctor-info__stat-label">Стаж</div>
+                </div>
+                <div class="doctor-info__stat">
+                    <div class="doctor-info__stat-value">${Number(doc.consultation_price).toLocaleString('ru-RU')} ₽</div>
+                    <div class="doctor-info__stat-label">Консультация</div>
+                </div>
+            </div>
+            ${doc.bio ? `<p class="doctor-info__bio">${doc.bio}</p>` : ''}
+            ${doc.education ? `<p class="doctor-info__bio"><strong>Образование:</strong> ${doc.education}</p>` : ''}
+            ${doc.schedules && doc.schedules.length ? `
+                <h4 style="margin: 16px 0 8px;">Расписание</h4>
+                <ul class="info-list">
+                    ${doc.schedules.map(s => `<li>${s.day_display}: ${s.start_time.slice(0,5)} — ${s.end_time.slice(0,5)}</li>`).join('')}
+                </ul>
+            ` : ''}
+        </div>
+    `;
+
+    // Обновляем ссылку записи
+    document.querySelector('a[href*="appointment"]').href = `/appointment/?doctor=${doctorId}`;
+}
+
+async function loadReviews() {
+    const data = await API.get(`/doctors/${doctorId}/reviews/`);
+    const grid = document.getElementById('reviewsGrid');
+    const reviews = data?.results || data || [];
+
+    if (reviews.length === 0) {
+        grid.innerHTML = '<p style="color:var(--gray);">Пока нет отзывов</p>';
+        return;
+    }
+
+    grid.innerHTML = reviews.map(r => `
+        <div class="review-card">
+            <div class="review-card__header">
+                <span class="review-card__author">${r.author_name}</span>
+                <span class="review-card__rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
+            </div>
+            <p class="review-card__text">${r.text}</p>
+            <div class="review-card__date">${formatDate(r.created_at)}</div>
+        </div>
+    `).join('');
+}
+
+loadDoctor();
+loadReviews();
+</script>
+{% endblock %}

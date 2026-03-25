@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<section class="hero hero--orange">
+    <div class="container">
+        <div class="hero__inner">
+            <div class="hero__content">
+                <h1>Лучшая<br>Ветклиника</h1>
+                <p>Заботимся о здоровье ваших питомцев с любовью и профессионализмом. Современное оборудование, опытные специалисты и индивидуальный подход к каждому пациенту.</p>
+                <a href="/appointment/" class="btn btn--green">Записаться на приём</a>
+            </div>
+            <div class="hero__image">
+                <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&h=500&fit=crop" alt="Счастливый питомец">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section__header">
+            <h2>Наши специалисты</h2>
+            <p>Опытные ветеринары с многолетним стажем работы</p>
+        </div>
+
+        <div class="search-bar">
+            <input type="text" class="search-input" id="doctorSearch" placeholder="ФИО или специальность">
+            <button class="search-btn" onclick="searchDoctors()">Найти</button>
+        </div>
+
+        <div class="cards-grid" id="doctorsGrid">
+            <div class="loading"><div class="spinner"></div>Загрузка...</div>
+        </div>
+    </div>
+</section>
+
+<section class="section" style="background: var(--bg-light);">
+    <div class="container">
+        <div class="section__header">
+            <h2>Специализации</h2>
+            <p>Широкий спектр ветеринарных услуг</p>
+        </div>
+        <div class="cards-grid" id="specialtiesGrid">
+            <div class="loading"><div class="spinner"></div>Загрузка...</div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadDoctors(search = '') {
+    const grid = document.getElementById('doctorsGrid');
+    let url = '/doctors/?page_size=6';
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+
+    const data = await API.get(url);
+    if (!data || !data.results) {
+        grid.innerHTML = '<p>Не удалось загрузить данные</p>';
+        return;
+    }
+
+    if (data.results.length === 0) {
+        grid.innerHTML = '<p style="text-align:center;color:var(--gray);">Врачи не найдены</p>';
+        return;
+    }
+
+    grid.innerHTML = data.results.map(doc => `
+        <a href="/doctors/${doc.id}/" class="card">
+            <img class="card__image"
+                src="${doc.photo || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=300&fit=crop'}"
+                alt="${doc.full_name}">
+            <div class="card__body">
+                <div class="card__title">${doc.full_name}</div>
+                <div class="card__subtitle">${doc.specialties.map(s => s.name).join(', ')}</div>
+                <div class="card__meta">
+                    <span class="card__rating"><span class="star">★</span> ${doc.avg_rating}</span>
+                    <span class="card__reviews">${doc.reviews_count} отзывов</span>
+                </div>
+                <div class="card__footer">
+                    <span class="card__price">${Number(doc.consultation_price).toLocaleString('ru-RU')} ₽</span>
+                    <span class="btn btn--sm btn--navy">Записаться</span>
+                </div>
+            </div>
+        </a>
+    `).join('');
+}
+
+async function loadSpecialties() {
+    const grid = document.getElementById('specialtiesGrid');
+    const data = await API.get('/doctors/specialties/');
+    if (!data || !data.results) return;
+
+    const colors = ['var(--teal)', 'var(--orange)', 'var(--green)', 'var(--red)', 'var(--navy)'];
+    grid.innerHTML = data.results.map((spec, i) => `
+        <a href="/doctors/?specialty=${encodeURIComponent(spec.name)}" class="card" style="text-align:center;">
+            <div class="card__body" style="padding:30px;">
+                <div style="width:60px;height:60px;border-radius:50%;background:${colors[i % colors.length]};margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
+                    <span style="font-size:1.5rem;">🩺</span>
+                </div>
+                <div class="card__title" style="font-size:0.9rem;">${spec.name}</div>
+            </div>
+        </a>
+    `).join('');
+}
+
+function searchDoctors() {
+    const q = document.getElementById('doctorSearch').value;
+    loadDoctors(q);
+}
+
+document.getElementById('doctorSearch').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchDoctors();
+});
+
+loadDoctors();
+loadSpecialties();
+</script>
+{% endblock %}

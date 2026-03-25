@@ -55,3 +55,12 @@ htmlcov/
 
 # Static files (collected)
 staticfiles/
+
+# Figma exports
+figma/
+
+# Build scripts
+docs/generate_docx.js
+
+# Word temp files
+~$*

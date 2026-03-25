@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}Запись на приём{% endblock %}
+
+{% block content %}
+<section class="hero hero--green">
+    <div class="container">
+        <div class="hero__inner">
+            <div class="hero__content">
+                <h1>Запись<br>на приём</h1>
+                <p>Выберите врача, услугу и удобное время для визита в нашу клинику.</p>
+            </div>
+            <div class="hero__image">
+                <img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=600&h=500&fit=crop" alt="Запись">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container" style="max-width: 700px;">
+        <div id="authCheck"></div>
+
+        <div class="form-section" id="appointmentForm" style="display:none;">
+            <h2>Заполните форму</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Врач</label>
+                    <select class="form-control" id="doctorSelect">
+                        <option value="">Выберите врача</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Услуга</label>
+                    <select class="form-control" id="serviceSelect">
+                        <option value="">Выберите услугу</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Питомец</label>
+                <select class="form-control" id="petSelect">
+                    <option value="">Выберите питомца</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Дата</label>
+                    <input type="date" class="form-control" id="dateInput">
+                </div>
+                <div class="form-group">
+                    <label>Время</label>
+                    <select class="form-control" id="timeSelect">
+                        <option value="">Сначала выберите врача и дату</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Комментарий</label>
+                <textarea class="form-control" id="commentInput" placeholder="Опишите симптомы или причину визита"></textarea>
+            </div>
+
+            <button class="btn btn--green btn--full" onclick="submitAppointment()" style="margin-top:16px;">
+                Записаться на приём
+            </button>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const params = new URLSearchParams(location.search);
+let allDoctors = [];
+
+async function init() {
+    if (!API.isAuthenticated()) {
+        document.getElementById('authCheck').innerHTML = `
+            <div class="alert alert--info">Для записи на приём необходимо <a href="/login/" style="font-weight:700;text-decoration:underline;">войти в аккаунт</a></div>
+        `;
+        return;
+    }
+
+    document.getElementById('appointmentForm').style.display = 'block';
+
+    // Загружаем данные параллельно
+    const [doctors, services, pets] = await Promise.all([
+        API.get('/doctors/'),
+        API.get('/services/'),
+        API.get('/pets/'),
+    ]);
+
+    allDoctors = doctors?.results || [];
+    const doctorSelect = document.getElementById('doctorSelect');
+    allDoctors.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = `${d.full_name} — ${d.specialties.map(s => s.name).join(', ')}`;
+        doctorSelect.appendChild(opt);
+    });
+
+    const serviceSelect = document.getElementById('serviceSelect');
+    (services?.results || []).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} — ${Number(s.price).toLocaleString('ru-RU')} ₽`;
+        serviceSelect.appendChild(opt);
+    });
+
+    const petSelect = document.getElementById('petSelect');
+    (pets?.results || []).forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.species_display || p.species})`;
+        petSelect.appendChild(opt);
+    });
+
+    if ((pets?.results || []).length === 0) {
+        petSelect.innerHTML = '<option value="">Сначала добавьте питомца в профиле</option>';
+    }
+
+    // Предзаполнение
+    if (params.get('doctor')) doctorSelect.value = params.get('doctor');
+    if (params.get('service')) serviceSelect.value = params.get('service');
+
+    // Минимальная дата — завтра
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('dateInput').min = tomorrow.toISOString().split('T')[0];
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 30);
+    document.getElementById('dateInput').max = maxDate.toISOString().split('T')[0];
+}
+
+document.getElementById('dateInput')?.addEventListener('change', loadSlots);
+document.getElementById('doctorSelect')?.addEventListener('change', loadSlots);
+
+async function loadSlots() {
+    const doctorId = document.getElementById('doctorSelect').value;
+    const dateVal = document.getElementById('dateInput').value;
+    const timeSelect = document.getElementById('timeSelect');
+
+    if (!doctorId || !dateVal) {
+        timeSelect.innerHTML = '<option value="">Сначала выберите врача и дату</option>';
+        return;
+    }
+
+    timeSelect.innerHTML = '<option value="">Загрузка...</option>';
+    const data = await API.get(`/doctors/${doctorId}/available-slots/?date=${dateVal}`);
+
+    if (!data || !data.slots || data.slots.length === 0) {
+        timeSelect.innerHTML = '<option value="">Нет доступных слотов</option>';
+        return;
+    }
+
+    timeSelect.innerHTML = '<option value="">Выберите время</option>';
+    data.slots.forEach(slot => {
+        const opt = document.createElement('option');
+        opt.value = slot;
+        opt.textContent = slot;
+        timeSelect.appendChild(opt);
+    });
+}
+
+async function submitAppointment() {
+    const data = {
+        doctor: parseInt(document.getElementById('doctorSelect').value),
+        pet: parseInt(document.getElementById('petSelect').value),
+        service: parseInt(document.getElementById('serviceSelect').value),
+        date: document.getElementById('dateInput').value,
+        time_slot: document.getElementById('timeSelect').value,
+        comment: document.getElementById('commentInput').value,
+    };
+
+    if (!data.doctor || !data.pet || !data.service || !data.date || !data.time_slot) {
+        showAlert(document.getElementById('appointmentForm'), 'Заполните все обязательные поля');
+        return;
+    }
+
+    const resp = await API.post('/appointments/', data);
+    if (resp && resp.ok) {
+        showAlert(document.getElementById('appointmentForm'), 'Запись успешно создана!', 'success');
+        setTimeout(() => window.location.href = '/profile/', 1500);
+    } else {
+        const err = await resp?.json();
+        const msg = Object.values(err || {}).flat().join('. ') || 'Ошибка при создании записи';
+        showAlert(document.getElementById('appointmentForm'), msg);
+    }
+}
+
+init();
+</script>
+{% endblock %}

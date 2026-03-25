@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PetCare{% endblock %} — Ветеринарная клиника</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="header__inner">
+            <a href="/" class="header__logo">PetCare</a>
+            <nav>
+                <ul class="header__nav" id="mainNav">
+                    <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Главная</a></li>
+                    <li><a href="/doctors/" {% if '/doctors' in request.path %}class="active"{% endif %}>Врачи</a></li>
+                    <li><a href="/services/" {% if '/services' in request.path %}class="active"{% endif %}>Услуги</a></li>
+                    <li><a href="/appointment/" {% if '/appointment' in request.path %}class="active"{% endif %}>Запись</a></li>
+                </ul>
+            </nav>
+            <div class="header__actions">
+                <a href="/login/" class="btn btn--sm btn--green">Войти</a>
+            </div>
+            <button class="header__burger" aria-label="Меню">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="footer__inner">
+            <div>
+                <div class="footer__logo">PetCare</div>
+                <p class="footer__desc">Ветеринарная клиника с заботой о вашем питомце. Современное оборудование и опытные специалисты.</p>
+            </div>
+            <div>
+                <h4>НАВИГАЦИЯ</h4>
+                <ul class="footer__links">
+                    <li><a href="/">Главная</a></li>
+                    <li><a href="/doctors/">Врачи</a></li>
+                    <li><a href="/services/">Услуги</a></li>
+                    <li><a href="/appointment/">Запись на приём</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>КОНТАКТЫ</h4>
+                <ul class="footer__links">
+                    <li>+7 (495) 123-45-67</li>
+                    <li>info@petcare.ru</li>
+                    <li>г. Москва, ул. Примерная, д. 1</li>
+                </ul>
+            </div>
+            <div>
+                <h4>РЕЖИМ РАБОТЫ</h4>
+                <ul class="footer__links">
+                    <li>Пн-Пт: 8:00 — 21:00</li>
+                    <li>Сб: 9:00 — 18:00</li>
+                    <li>Вс: 10:00 — 16:00</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer__bottom">© 2026 PetCare. Все права защищены.</div>
+    </footer>
+
+    <script src="{% static 'js/api.js' %}"></script>
+    <script src="{% static 'js/app.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

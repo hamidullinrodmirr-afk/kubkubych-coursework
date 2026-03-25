@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Услуги{% endblock %}
+
+{% block content %}
+<section class="hero hero--navy">
+    <div class="container">
+        <div class="hero__inner">
+            <div class="hero__content">
+                <h1>Наши<br>Услуги</h1>
+                <p>Полный спектр ветеринарных услуг для здоровья и счастья ваших питомцев.</p>
+            </div>
+            <div class="hero__image">
+                <img src="https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&h=500&fit=crop" alt="Услуги">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="Название услуги">
+            <button class="search-btn" onclick="applyFilters()">Найти</button>
+        </div>
+
+        <div class="layout-sidebar">
+            <aside>
+                <div class="specialties-box">
+                    <div class="specialties-box__title">Категории</div>
+                    <ul class="specialties-list" id="specList">
+                        <li class="active" data-id="">Все услуги</li>
+                    </ul>
+                </div>
+            </aside>
+
+            <div>
+                <div class="cards-grid" id="servicesGrid">
+                    <div class="loading"><div class="spinner"></div>Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentSpecId = '';
+
+async function loadSpecialties() {
+    const data = await API.get('/doctors/specialties/');
+    if (!data || !data.results) return;
+    const list = document.getElementById('specList');
+    data.results.forEach(s => {
+        const li = document.createElement('li');
+        li.textContent = s.name;
+        li.dataset.id = s.id;
+        li.addEventListener('click', () => {
+            document.querySelectorAll('.specialties-list li').forEach(el => el.classList.remove('active'));
+            li.classList.add('active');
+            currentSpecId = s.id;
+            applyFilters();
+        });
+        list.appendChild(li);
+    });
+}
+
+async function loadServices() {
+    const grid = document.getElementById('servicesGrid');
+    const search = document.getElementById('searchInput').value;
+    let url = '/services/';
+    const params = [];
+    if (currentSpecId) params.push(`specialty=${currentSpecId}`);
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    if (params.length) url += '?' + params.join('&');
+
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+    const data = await API.get(url);
+
+    if (!data || !data.results || data.results.length === 0) {
+        grid.innerHTML = '<p style="text-align:center;color:var(--gray);padding:40px;">Услуги не найдены</p>';
+        return;
+    }
+
+    grid.innerHTML = data.results.map(svc => `
+        <div class="card">
+            <img class="card__image"
+                src="${svc.photo || 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=300&fit=crop'}"
+                alt="${svc.name}">
+            <div class="card__body">
+                <div class="card__title">${svc.name}</div>
+                <div class="card__subtitle">${svc.specialty_detail?.name || ''} · ${svc.duration_minutes} мин.</div>
+                ${svc.description ? `<p style="font-size:0.85rem;color:var(--gray);margin-bottom:12px;">${svc.description.slice(0,120)}${svc.description.length > 120 ? '...' : ''}</p>` : ''}
+                <div class="card__footer">
+                    <span class="card__price">от ${Number(svc.price).toLocaleString('ru-RU')} ₽</span>
+                    <a href="/appointment/?service=${svc.id}" class="btn btn--sm btn--navy">Записаться</a>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function applyFilters() { loadServices(); }
+
+document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') applyFilters();
+});
+
+loadSpecialties();
+loadServices();
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <h2>Вход</h2>
+        <p class="subtitle">Войдите в свой аккаунт PetCare</p>
+
+        <div id="alerts"></div>
+
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" class="form-control" id="email" placeholder="email@example.com" required>
+            </div>
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" class="form-control" id="password" placeholder="Введите пароль" required>
+            </div>
+            <button type="submit" class="btn btn--green btn--full" style="margin-top:16px;">Войти</button>
+        </form>
+
+        <div class="auth-link">
+            Нет аккаунта? <a href="/register/">Зарегистрироваться</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const resp = await API.login(email, password);
+    if (resp.ok) {
+        window.location.href = '/';
+    } else {
+        showAlert(document.getElementById('alerts'), 'Неверный email или пароль');
+    }
+    return false;
+}
+</script>
+{% endblock %}
