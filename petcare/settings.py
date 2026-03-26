@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
 
+    'django_celery_beat',
+
     # Local apps
     'users',
     'pets',
@@ -134,3 +136,19 @@ EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '1025'))
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = 'noreply@petcare.ru'
+
+# Celery
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Для тестов: выполнять задачи синхронно
+import sys
+if 'test' in sys.argv:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
