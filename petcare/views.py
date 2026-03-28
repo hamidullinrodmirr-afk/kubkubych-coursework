@@ -36,3 +36,7 @@ class RegisterView(TemplateView):
 
 class ProfileView(TemplateView):
     template_name = 'profile/index.html'
+
+
+class OAuthCallbackView(TemplateView):
+    template_name = 'auth/oauth_callback.html'

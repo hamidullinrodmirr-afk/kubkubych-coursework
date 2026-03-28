@@ -1036,3 +1036,63 @@ textarea.form-control {
         padding: 32px 24px;
     }
 }
+
+
+/* ========== OAuth ========== */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    gap: 12px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #ddd;
+}
+
+.auth-divider span {
+    font-size: 0.85rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn--oauth {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+
+.btn--oauth:hover {
+    opacity: 0.85;
+}
+
+.btn--google {
+    background: #fff;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.btn--vk {
+    background: #0077FF;
+    color: #fff;
+}

@@ -130,6 +130,15 @@ SIMPLE_JWT = {
 # CORS
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
+# OAuth2
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/oauth/google/callback/')
+
+VK_CLIENT_ID = os.getenv('VK_CLIENT_ID', '')
+VK_CLIENT_SECRET = os.getenv('VK_CLIENT_SECRET', '')
+VK_REDIRECT_URI = os.getenv('VK_REDIRECT_URI', 'http://localhost:8000/api/auth/oauth/vk/callback/')
+
 # Email (Mailhog for development)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')

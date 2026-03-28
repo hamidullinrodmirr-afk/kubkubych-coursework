@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Авторизация...{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card" style="text-align:center;">
+        <div class="loading"><div class="spinner"></div>Выполняется вход...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const params = new URLSearchParams(location.search);
+    const access = params.get('access');
+    const refresh = params.get('refresh');
+
+    if (access && refresh) {
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        window.location.href = '/';
+    } else {
+        window.location.href = '/login/?error=oauth_failed';
+    }
+})();
+</script>
+{% endblock %}
