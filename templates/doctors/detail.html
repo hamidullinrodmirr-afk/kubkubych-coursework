@@ -48,9 +48,18 @@ async function loadDoctor() {
     document.getElementById('heroSubtitle').textContent = doc.specialties.map(s => s.name).join(', ');
     document.title = `${doc.full_name} — PetCare`;
 
+    const doctorPhotos = [
+        'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=450&fit=crop',
+        'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=450&fit=crop',
+        'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=450&fit=crop',
+        'https://images.unsplash.com/photo-1594824476967-48c8b964ac31?w=400&h=450&fit=crop',
+        'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=450&fit=crop',
+        'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&h=450&fit=crop',
+    ];
+
     document.getElementById('doctorInfo').innerHTML = `
         <img class="doctor-info__photo"
-            src="${doc.photo || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=450&fit=crop'}"
+            src="${doc.photo || doctorPhotos[(doctorId - 1) % doctorPhotos.length]}"
             alt="${doc.full_name}">
         <div class="doctor-info__details">
             <h2>${doc.full_name}</h2>
@@ -110,7 +119,38 @@ async function loadReviews() {
     `).join('');
 }
 
+async function loadDoctorServices() {
+    const doc = await API.get(`/doctors/${doctorId}/`);
+    if (!doc || !doc.specialties) return;
+
+    const specIds = doc.specialties.map(s => s.id);
+    const grid = document.getElementById('servicesGrid');
+    const allServices = await API.get('/services/');
+    const items = (allServices?.results || []).filter(svc =>
+        specIds.includes(svc.specialty_detail?.id || svc.specialty)
+    );
+
+    if (items.length === 0) {
+        grid.innerHTML = '<p style="color:var(--gray);">Нет привязанных услуг</p>';
+        return;
+    }
+
+    grid.innerHTML = items.map(svc => `
+        <div class="card">
+            <div class="card__body">
+                <div class="card__title">${svc.name}</div>
+                <div class="card__subtitle">${svc.duration_minutes} мин.</div>
+                <div class="card__footer">
+                    <span class="card__price">${Number(svc.price).toLocaleString('ru-RU')} ₽</span>
+                    <a href="/appointment/?doctor=${doctorId}&service=${svc.id}" class="btn btn--sm btn--navy">Записаться</a>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
 loadDoctor();
+loadDoctorServices();
 loadReviews();
 </script>
 {% endblock %}

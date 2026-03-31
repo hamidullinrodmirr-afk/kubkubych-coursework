@@ -24,7 +24,7 @@ class SpecialtyViewSet(viewsets.ModelViewSet):
 
 class DoctorViewSet(viewsets.ModelViewSet):
     filterset_fields = ['is_available']
-    search_fields = ['user__first_name', 'user__last_name']
+    search_fields = ['user__first_name', 'user__last_name', 'specialties__name']
     ordering_fields = ['consultation_price', 'experience_years']
 
     def get_queryset(self):

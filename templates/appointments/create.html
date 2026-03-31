@@ -63,7 +63,9 @@
                 <textarea class="form-control" id="commentInput" placeholder="Опишите симптомы или причину визита"></textarea>
             </div>
 
-            <button class="btn btn--green btn--full" onclick="submitAppointment()" style="margin-top:16px;">
+            <div id="appointmentAlerts"></div>
+
+            <button class="btn btn--green btn--full" onclick="submitAppointment()" id="submitBtn" style="margin-top:16px;">
                 Записаться на приём
             </button>
         </div>
@@ -175,19 +177,36 @@ async function submitAppointment() {
         comment: document.getElementById('commentInput').value,
     };
 
+    const alerts = document.getElementById('appointmentAlerts');
+    alerts.innerHTML = '';
+
     if (!data.doctor || !data.pet || !data.service || !data.date || !data.time_slot) {
-        showAlert(document.getElementById('appointmentForm'), 'Заполните все обязательные поля');
+        showAlert(alerts, 'Заполните все обязательные поля');
+        alerts.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
 
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Отправка...';
+
     const resp = await API.post('/appointments/', data);
     if (resp && resp.ok) {
-        showAlert(document.getElementById('appointmentForm'), 'Запись успешно создана!', 'success');
-        setTimeout(() => window.location.href = '/profile/', 1500);
+        document.getElementById('appointmentForm').innerHTML = `
+            <div class="alert alert--success" style="text-align:center;padding:40px;">
+                <h3 style="margin-bottom:12px;color:var(--green);">Запись успешно создана!</h3>
+                <p>Мы отправим вам подтверждение на email.</p>
+                <a href="/profile/" class="btn btn--green" style="margin-top:16px;">Перейти в личный кабинет</a>
+            </div>
+        `;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
+        btn.disabled = false;
+        btn.textContent = 'Записаться на приём';
         const err = await resp?.json();
         const msg = Object.values(err || {}).flat().join('. ') || 'Ошибка при создании записи';
-        showAlert(document.getElementById('appointmentForm'), msg);
+        showAlert(alerts, msg);
+        alerts.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 

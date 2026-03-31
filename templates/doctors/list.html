@@ -28,7 +28,7 @@
                 <div class="specialties-box">
                     <div class="specialties-box__title">Специализации</div>
                     <ul class="specialties-list" id="specList">
-                        <li class="active" data-spec="">Все специализации</li>
+                        <li class="active" data-spec="" onclick="resetSpecFilter()">Все специализации</li>
                     </ul>
                 </div>
             </aside>
@@ -84,10 +84,19 @@ async function loadDoctors(page = 1) {
         return;
     }
 
-    grid.innerHTML = data.results.map(doc => `
+    const doctorPhotos = [
+        'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1594824476967-48c8b964ac31?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&h=300&fit=crop',
+    ];
+
+    grid.innerHTML = data.results.map((doc, i) => `
         <a href="/doctors/${doc.id}/" class="card">
             <img class="card__image"
-                src="${doc.photo || 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=300&fit=crop'}"
+                src="${doc.photo || doctorPhotos[i % doctorPhotos.length]}"
                 alt="${doc.full_name}">
             <div class="card__body">
                 <div class="card__title">${doc.full_name}</div>
@@ -118,6 +127,13 @@ async function loadDoctors(page = 1) {
     } else {
         pag.innerHTML = '';
     }
+}
+
+function resetSpecFilter() {
+    document.querySelectorAll('.specialties-list li').forEach(el => el.classList.remove('active'));
+    document.querySelector('.specialties-list li[data-spec=""]').classList.add('active');
+    currentSpec = '';
+    applyFilters();
 }
 
 function applyFilters() { loadDoctors(1); }

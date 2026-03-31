@@ -19,7 +19,7 @@ async function updateAuthUI() {
             if (profile) {
                 actions.innerHTML = `
                     <a href="/profile/" class="header__user">${profile.last_name} ${profile.first_name}</a>
-                    <button class="btn btn--sm btn--outline" style="border-color: #fff; color: #fff;" onclick="API.logout()">Выход</button>
+                    <button class="btn btn--sm btn--outline" onclick="API.logout()">Выход</button>
                 `;
                 return;
             }

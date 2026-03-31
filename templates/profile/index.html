@@ -180,7 +180,15 @@ async function addPet() {
     if (resp && resp.ok) loadPets();
     else {
         const err = await resp?.json();
-        alert(Object.values(err || {}).flat().join('. ') || 'Ошибка');
+        const msg = Object.values(err || {}).flat().join('. ') || 'Ошибка при добавлении питомца';
+        let alertBox = document.getElementById('petFormAlerts');
+        if (!alertBox) {
+            alertBox = document.createElement('div');
+            alertBox.id = 'petFormAlerts';
+            document.getElementById('petFormContainer').prepend(alertBox);
+        }
+        alertBox.innerHTML = '';
+        showAlert(alertBox, msg);
     }
 }
 
@@ -206,6 +214,8 @@ function showSettings() {
 }
 
 async function saveProfile() {
+    const alerts = document.getElementById('settingsAlerts');
+    alerts.innerHTML = '';
     const resp = await API.patch('/auth/me/', {
         first_name: document.getElementById('setFirstName').value,
         last_name: document.getElementById('setLastName').value,
@@ -214,7 +224,11 @@ async function saveProfile() {
     if (resp && resp.ok) {
         userProfile = await resp.json();
         document.getElementById('profileName').textContent = `${userProfile.last_name} ${userProfile.first_name}`;
-        showAlert(document.getElementById('settingsAlerts'), 'Профиль обновлён', 'success');
+        showAlert(alerts, 'Профиль обновлён', 'success');
+    } else {
+        const err = await resp?.json();
+        const msg = Object.values(err || {}).flat().join('. ') || 'Не удалось сохранить профиль';
+        showAlert(alerts, msg);
     }
 }
 

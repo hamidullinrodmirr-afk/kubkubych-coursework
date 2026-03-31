@@ -28,7 +28,7 @@
                 <div class="specialties-box">
                     <div class="specialties-box__title">Категории</div>
                     <ul class="specialties-list" id="specList">
-                        <li class="active" data-id="">Все услуги</li>
+                        <li class="active" data-id="" onclick="resetSpecFilter()">Все услуги</li>
                     </ul>
                 </div>
             </aside>
@@ -82,10 +82,21 @@ async function loadServices() {
         return;
     }
 
-    grid.innerHTML = data.results.map(svc => `
+    const servicePhotos = [
+        'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1583337130417-13571c0aa26d?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1425082661507-6af4ae4af61f?w=400&h=300&fit=crop',
+        'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=400&h=300&fit=crop',
+    ];
+
+    grid.innerHTML = data.results.map((svc, i) => `
         <div class="card">
             <img class="card__image"
-                src="${svc.photo || 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=300&fit=crop'}"
+                src="${svc.photo || servicePhotos[i % servicePhotos.length]}"
                 alt="${svc.name}">
             <div class="card__body">
                 <div class="card__title">${svc.name}</div>
@@ -98,6 +109,13 @@ async function loadServices() {
             </div>
         </div>
     `).join('');
+}
+
+function resetSpecFilter() {
+    document.querySelectorAll('.specialties-list li').forEach(el => el.classList.remove('active'));
+    document.querySelector('.specialties-list li[data-id=""]').classList.add('active');
+    currentSpecId = '';
+    applyFilters();
 }
 
 function applyFilters() { loadServices(); }
