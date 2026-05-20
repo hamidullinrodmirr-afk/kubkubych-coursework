@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Услуги{% endblock %}
 
 {% block content %}
@@ -10,7 +11,7 @@
                 <p>Полный спектр ветеринарных услуг для здоровья и счастья ваших питомцев.</p>
             </div>
             <div class="hero__image">
-                <img src="https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=600&h=500&fit=crop" alt="Услуги">
+                <img src="{% static 'img/illustrations/hero-services.svg' %}" alt="Ветеринарные услуги">
             </div>
         </div>
     </div>
@@ -20,15 +21,15 @@
     <div class="container">
         <div class="search-bar">
             <input type="text" class="search-input" id="searchInput" placeholder="Название услуги">
-            <button class="search-btn" onclick="applyFilters()">Найти</button>
+            <button class="search-btn" onclick="loadServices()"><svg class="icon"><use href="#ic-search"/></svg>Найти</button>
         </div>
 
         <div class="layout-sidebar">
             <aside>
                 <div class="specialties-box">
-                    <div class="specialties-box__title">Категории</div>
+                    <div class="specialties-box__title">Поиск услуги</div>
                     <ul class="specialties-list" id="specList">
-                        <li class="active" data-id="" onclick="resetSpecFilter()">Все услуги</li>
+                        <li class="active" id="allSpecsBtn">Все услуги</li>
                     </ul>
                 </div>
             </aside>
@@ -47,19 +48,41 @@
 <script>
 let currentSpecId = '';
 
+const servicePhotos = [
+    'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1583337130417-13571c0aa26d?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1425082661507-6af4ae4af61f?w=400&h=300&fit=crop',
+    'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=400&h=300&fit=crop',
+];
+
+function setActiveSpec(el) {
+    document.querySelectorAll('#specList li').forEach(li => li.classList.remove('active'));
+    el.classList.add('active');
+}
+
 async function loadSpecialties() {
     const data = await API.get('/doctors/specialties/');
     if (!data || !data.results) return;
     const list = document.getElementById('specList');
+    const allBtn = document.getElementById('allSpecsBtn');
+
+    allBtn.addEventListener('click', () => {
+        setActiveSpec(allBtn);
+        currentSpecId = '';
+        loadServices();
+    });
+
     data.results.forEach(s => {
         const li = document.createElement('li');
         li.textContent = s.name;
-        li.dataset.id = s.id;
         li.addEventListener('click', () => {
-            document.querySelectorAll('.specialties-list li').forEach(el => el.classList.remove('active'));
-            li.classList.add('active');
+            setActiveSpec(li);
             currentSpecId = s.id;
-            applyFilters();
+            loadServices();
         });
         list.appendChild(li);
     });
@@ -67,7 +90,7 @@ async function loadSpecialties() {
 
 async function loadServices() {
     const grid = document.getElementById('servicesGrid');
-    const search = document.getElementById('searchInput').value;
+    const search = document.getElementById('searchInput').value.trim();
     let url = '/services/';
     const params = [];
     if (currentSpecId) params.push(`specialty=${currentSpecId}`);
@@ -75,53 +98,41 @@ async function loadServices() {
     if (params.length) url += '?' + params.join('&');
 
     grid.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
-    const data = await API.get(url);
 
-    if (!data || !data.results || data.results.length === 0) {
-        grid.innerHTML = '<p style="text-align:center;color:var(--gray);padding:40px;">Услуги не найдены</p>';
-        return;
-    }
+    try {
+        const data = await API.get(url);
+        if (!data || !data.results || data.results.length === 0) {
+            grid.innerHTML = '<p style="text-align:center;color:var(--gray);padding:40px;">Услуги не найдены</p>';
+            return;
+        }
 
-    const servicePhotos = [
-        'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1583337130417-13571c0aa26d?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1425082661507-6af4ae4af61f?w=400&h=300&fit=crop',
-        'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?w=400&h=300&fit=crop',
-    ];
-
-    grid.innerHTML = data.results.map((svc, i) => `
-        <div class="card">
-            <img class="card__image"
-                src="${svc.photo || servicePhotos[i % servicePhotos.length]}"
-                alt="${svc.name}">
-            <div class="card__body">
-                <div class="card__title">${svc.name}</div>
-                <div class="card__subtitle">${svc.specialty_detail?.name || ''} · ${svc.duration_minutes} мин.</div>
-                ${svc.description ? `<p style="font-size:0.85rem;color:var(--gray);margin-bottom:12px;">${svc.description.slice(0,120)}${svc.description.length > 120 ? '...' : ''}</p>` : ''}
-                <div class="card__footer">
-                    <span class="card__price">от ${Number(svc.price).toLocaleString('ru-RU')} ₽</span>
-                    <a href="/appointment/?service=${svc.id}" class="btn btn--sm btn--navy">Записаться</a>
+        const tints = ['brand', 'orange', 'coral', 'green', 'violet'];
+        grid.innerHTML = data.results.map((svc, i) => `
+            <div class="card reveal" style="--i:${i % 4}">
+                <img class="card__image"
+                    src="${esc(svc.photo) || servicePhotos[i % servicePhotos.length]}"
+                    alt="${esc(svc.name)}"
+                    onerror="this.src='${servicePhotos[i % servicePhotos.length]}'">
+                <div class="card__body">
+                    ${svc.specialty_detail?.name ? `<span class="chip chip--${tints[i % tints.length]}">${esc(svc.specialty_detail.name)}</span>` : ''}
+                    <div class="card__title">${esc(svc.name)}</div>
+                    <div class="card__subtitle">${esc(svc.duration_minutes)} мин.</div>
+                    ${svc.description ? `<p style="font-size:0.85rem;color:var(--muted);">${esc(svc.description.slice(0,110))}${svc.description.length > 110 ? '…' : ''}</p>` : ''}
+                    <div class="card__footer">
+                        <span class="card__price">от ${Number(svc.price).toLocaleString('ru-RU')} ₽</span>
+                        <a href="/appointment/?service=${svc.id}" class="btn btn--sm btn--navy">Записаться</a>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+        revealScan(grid);
+    } catch (e) {
+        grid.innerHTML = '<p style="text-align:center;color:var(--gray);padding:40px;">Ошибка загрузки</p>';
+    }
 }
-
-function resetSpecFilter() {
-    document.querySelectorAll('.specialties-list li').forEach(el => el.classList.remove('active'));
-    document.querySelector('.specialties-list li[data-id=""]').classList.add('active');
-    currentSpecId = '';
-    applyFilters();
-}
-
-function applyFilters() { loadServices(); }
 
 document.getElementById('searchInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') applyFilters();
+    if (e.key === 'Enter') loadServices();
 });
 
 loadSpecialties();

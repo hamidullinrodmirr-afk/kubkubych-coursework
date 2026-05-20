@@ -1,8 +1,33 @@
+import logging
 from celery import shared_task
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
+
+logger = logging.getLogger(__name__)
+
+
+def enqueue(task, *args, **kwargs):
+    """Best-effort постановка задачи в очередь без блокировки HTTP-ответа.
+
+    Запись уже сохранена в БД, письмо — побочный эффект (см. инвариант CLAUDE.md).
+    При недоступном брокере publish может висеть несколько секунд на таймауте
+    подключения — выносим его в daemon-поток, чтобы ответ вернулся сразу.
+    В eager-режиме (тесты) выполняем синхронно: детерминированно и без
+    обращения к БД из постороннего потока.
+    """
+    def _run():
+        try:
+            task.delay(*args, **kwargs)
+        except Exception as exc:  # noqa: BLE001 — сбой брокера/сети глушим намеренно
+            logger.warning('Не удалось поставить задачу %s в очередь: %s', task.name, exc)
+
+    if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
+        _run()
+    else:
+        import threading
+        threading.Thread(target=_run, daemon=True).start()
 
 
 @shared_task

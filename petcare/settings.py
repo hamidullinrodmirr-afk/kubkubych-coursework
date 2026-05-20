@@ -154,6 +154,14 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+# Результаты задач не читаем — не задействуем result backend.
+CELERY_TASK_IGNORE_RESULT = True
+# Не зацикливать publish при недоступном брокере: один быстрый таймаут и наружу.
+CELERY_TASK_PUBLISH_RETRY = False
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = False
+CELERY_BROKER_CONNECTION_RETRY = False
+CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
+CELERY_BROKER_TRANSPORT_OPTIONS = {'socket_connect_timeout': 2, 'socket_timeout': 2}
 
 # Для тестов: выполнять задачи синхронно
 import sys

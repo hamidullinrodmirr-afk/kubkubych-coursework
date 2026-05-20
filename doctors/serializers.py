@@ -22,6 +22,7 @@ class DoctorListSerializer(serializers.ModelSerializer):
     specialties = SpecialtySerializer(many=True, read_only=True)
     avg_rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
+    photo = serializers.SerializerMethodField()
 
     class Meta:
         model = Doctor
@@ -33,6 +34,14 @@ class DoctorListSerializer(serializers.ModelSerializer):
 
     def get_full_name(self, obj):
         return obj.user.full_name
+
+    def get_photo(self, obj):
+        if obj.photo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.photo.url)
+            return obj.photo.url
+        return obj.photo_url or ''
 
     def get_avg_rating(self, obj):
         if hasattr(obj, '_avg_rating'):

@@ -81,6 +81,27 @@ class AppointmentCreateTest(AppointmentTestMixin, TestCase):
             client=self.patient, doctor=self.doctor,
         ).exists())
 
+    def test_create_succeeds_when_task_broker_down(self):
+        """Сбой брокера задач (Redis недоступен) не должен ломать создание записи."""
+        from unittest.mock import patch
+        data = {
+            'doctor': self.doctor.id,
+            'pet': self.pet.id,
+            'service': self.service.id,
+            'date': self.next_monday.isoformat(),
+            'time_slot': '11:00',
+            'comment': '',
+        }
+        with patch(
+            'appointments.tasks.send_appointment_confirmation.delay',
+            side_effect=OSError('Error connecting to redis'),
+        ):
+            response = self.client_api.post('/api/appointments/', data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(Appointment.objects.filter(
+            client=self.patient, time_slot=time(11, 0),
+        ).exists())
+
 
 class BusySlotValidationTest(AppointmentTestMixin, TestCase):
     """Тест 3: Запись на занятый слот"""

@@ -5,13 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PetCare{% endblock %} — Ветеринарная клиника</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700;800&display=swap&subset=cyrillic,latin">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    {% include 'partials/icons.html' %}
     <header class="header">
         <div class="header__inner">
-            <a href="/" class="header__logo">PetCare</a>
+            <a href="/" class="header__logo">
+                <svg class="header__logo-icon" width="32" height="32" viewBox="0 0 44 44" aria-hidden="true">
+                    <rect width="44" height="44" rx="13" fill="#0E8C8B"/>
+                    <path d="M18.5 10h7v8.5H34v7h-8.5V34h-7v-8.5H10v-7h8.5z" fill="#fff"/>
+                </svg>
+                PetCare
+            </a>
             <nav>
                 <ul class="header__nav" id="mainNav">
                     <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Главная</a></li>
@@ -34,34 +44,38 @@
     </main>
 
     <footer class="footer">
+        <div class="footer__top">
+            <div class="footer__top-inner">
+                <svg class="footer__logo-icon" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+                    <rect width="44" height="44" rx="13" fill="#0E8C8B"/>
+                    <path d="M18.5 10h7v8.5H34v7h-8.5V34h-7v-8.5H10v-7h8.5z" fill="#fff"/>
+                </svg>
+                <span class="footer__brand">PetCare</span>
+            </div>
+        </div>
         <div class="footer__inner">
-            <div>
-                <div class="footer__logo">PetCare</div>
-                <p class="footer__desc">Ветеринарная клиника с заботой о вашем питомце. Современное оборудование и опытные специалисты.</p>
-            </div>
-            <div>
-                <h4>НАВИГАЦИЯ</h4>
-                <ul class="footer__links">
-                    <li><a href="/">Главная</a></li>
-                    <li><a href="/doctors/">Врачи</a></li>
-                    <li><a href="/services/">Услуги</a></li>
-                    <li><a href="/appointment/">Запись на приём</a></li>
-                </ul>
-            </div>
             <div>
                 <h4>КОНТАКТЫ</h4>
                 <ul class="footer__links">
-                    <li>+7 (495) 123-45-67</li>
-                    <li>info@petcare.ru</li>
-                    <li>г. Москва, ул. Примерная, д. 1</li>
+                    <li>Эл. почта: info@petcare.ru</li>
+                    <li>Телефон: +7-918-657-97-33</li>
                 </ul>
             </div>
             <div>
-                <h4>РЕЖИМ РАБОТЫ</h4>
+                <h4>ГРАФИК РАБОТЫ</h4>
                 <ul class="footer__links">
-                    <li>Пн-Пт: 8:00 — 21:00</li>
-                    <li>Сб: 9:00 — 18:00</li>
-                    <li>Вс: 10:00 — 16:00</li>
+                    <li>Пн — Пт: 5:00 — 23:00</li>
+                    <li>Суббота: 8:00 — 16:00</li>
+                    <li>Воскресенье: 8:00 — 13:00</li>
+                    <li>Праздники: 8:00 — 16:00</li>
+                </ul>
+            </div>
+            <div>
+                <h4>СОЦ. СЕТИ</h4>
+                <ul class="footer__links">
+                    <li><a href="#">ВКОНТАКТЕ</a></li>
+                    <li><a href="#">ТЕЛЕГРАМ</a></li>
+                    <li><a href="#" style="font-weight:800;">МАКС</a></li>
                 </ul>
             </div>
         </div>

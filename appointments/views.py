@@ -34,8 +34,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         appointment = serializer.save()
-        from appointments.tasks import send_appointment_confirmation
-        send_appointment_confirmation.delay(appointment.id)
+        from appointments.tasks import enqueue, send_appointment_confirmation
+        enqueue(send_appointment_confirmation, appointment.id)
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -62,8 +62,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
         appointment.status = Appointment.Status.CONFIRMED
         appointment.save()
-        from appointments.tasks import send_appointment_confirmation
-        send_appointment_confirmation.delay(appointment.id)
+        from appointments.tasks import enqueue, send_appointment_confirmation
+        enqueue(send_appointment_confirmation, appointment.id)
         return Response(AppointmentDetailSerializer(appointment).data)
 
     @action(detail=True, methods=['post'])

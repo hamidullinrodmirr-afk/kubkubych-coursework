@@ -19,17 +19,17 @@
             <div class="loading"><div class="spinner"></div>Загрузка...</div>
         </div>
 
-        <div style="margin-top: 40px;">
-            <h2 style="color: var(--teal); margin-bottom: 20px;">Оказываемые услуги</h2>
+        <div style="margin-top: 48px;">
+            <h2 class="section-title">Оказываемые услуги</h2>
             <div class="cards-grid" id="servicesGrid"></div>
         </div>
 
-        <div style="margin-top: 60px;">
-            <h2 style="color: var(--teal); margin-bottom: 20px;">Отзывы</h2>
+        <div style="margin-top: 64px;">
+            <h2 class="section-title">Отзывы</h2>
             <div class="reviews-grid" id="reviewsGrid"></div>
         </div>
 
-        <div style="text-align: center; margin-top: 40px;">
+        <div style="text-align: center; margin-top: 48px;">
             <a href="/appointment/?doctor={{ doctor_id }}" class="btn btn--green">Записаться на приём</a>
         </div>
     </div>
@@ -39,42 +39,54 @@
 {% block extra_js %}
 <script>
 const doctorId = {{ doctor_id }};
+const defaultPhotos = [
+    'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1594824476967-48c8b964ac31?w=400&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=450&fit=crop',
+    'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&h=450&fit=crop',
+];
+
+function pluralYears(n) {
+    const mod = n % 10, mod100 = n % 100;
+    if (mod === 1 && mod100 !== 11) return n + ' год';
+    if (mod >= 2 && mod <= 4 && (mod100 < 12 || mod100 > 14)) return n + ' года';
+    return n + ' лет';
+}
 
 async function loadDoctor() {
     const doc = await API.get(`/doctors/${doctorId}/`);
-    if (!doc) return;
+    if (!doc) {
+        document.getElementById('doctorInfo').innerHTML = '<p style="text-align:center;color:var(--gray);padding:40px;">Врач не найден</p>';
+        return;
+    }
 
     document.getElementById('heroTitle').textContent = doc.full_name;
     document.getElementById('heroSubtitle').textContent = doc.specialties.map(s => s.name).join(', ');
     document.title = `${doc.full_name} — PetCare`;
 
-    const doctorPhotos = [
-        'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=450&fit=crop',
-        'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=450&fit=crop',
-        'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=450&fit=crop',
-        'https://images.unsplash.com/photo-1594824476967-48c8b964ac31?w=400&h=450&fit=crop',
-        'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=450&fit=crop',
-        'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&h=450&fit=crop',
-    ];
+    const photo = doc.photo || defaultPhotos[(doctorId - 1) % defaultPhotos.length];
 
     document.getElementById('doctorInfo').innerHTML = `
         <img class="doctor-info__photo"
-            src="${doc.photo || doctorPhotos[(doctorId - 1) % doctorPhotos.length]}"
-            alt="${doc.full_name}">
+            src="${esc(photo)}"
+            alt="${esc(doc.full_name)}"
+            onerror="this.src='${defaultPhotos[(doctorId - 1) % defaultPhotos.length]}'">
         <div class="doctor-info__details">
-            <h2>${doc.full_name}</h2>
-            <div class="doctor-info__specialty">${doc.specialties.map(s => s.name).join(', ')}</div>
+            <h2>${esc(doc.full_name)}</h2>
+            <div class="doctor-info__specialty">${esc(doc.specialties.map(s => s.name).join(', '))}</div>
             <div class="doctor-info__stats">
                 <div class="doctor-info__stat">
-                    <div class="doctor-info__stat-value">★ ${doc.avg_rating}</div>
+                    <div class="doctor-info__stat-value">★ ${Number(doc.avg_rating || 0).toFixed(1)}</div>
                     <div class="doctor-info__stat-label">Рейтинг</div>
                 </div>
                 <div class="doctor-info__stat">
-                    <div class="doctor-info__stat-value">${doc.reviews_count}</div>
+                    <div class="doctor-info__stat-value">${doc.reviews_count || 0}</div>
                     <div class="doctor-info__stat-label">Отзывов</div>
                 </div>
                 <div class="doctor-info__stat">
-                    <div class="doctor-info__stat-value">${doc.experience_years} лет</div>
+                    <div class="doctor-info__stat-value">${pluralYears(doc.experience_years)}</div>
                     <div class="doctor-info__stat-label">Стаж</div>
                 </div>
                 <div class="doctor-info__stat">
@@ -82,19 +94,17 @@ async function loadDoctor() {
                     <div class="doctor-info__stat-label">Консультация</div>
                 </div>
             </div>
-            ${doc.bio ? `<p class="doctor-info__bio">${doc.bio}</p>` : ''}
-            ${doc.education ? `<p class="doctor-info__bio"><strong>Образование:</strong> ${doc.education}</p>` : ''}
+            ${doc.bio ? `<p class="doctor-info__bio">${esc(doc.bio)}</p>` : ''}
+            ${doc.education ? `<p class="doctor-info__bio"><strong>Образование:</strong> ${esc(doc.education)}</p>` : ''}
             ${doc.schedules && doc.schedules.length ? `
                 <h4 style="margin: 16px 0 8px;">Расписание</h4>
                 <ul class="info-list">
-                    ${doc.schedules.map(s => `<li>${s.day_display}: ${s.start_time.slice(0,5)} — ${s.end_time.slice(0,5)}</li>`).join('')}
+                    ${doc.schedules.map(s => `<li>${esc(s.day_display)}: ${esc(s.start_time.slice(0,5))} — ${esc(s.end_time.slice(0,5))}</li>`).join('')}
                 </ul>
             ` : ''}
+            <a href="/appointment/?doctor=${doctorId}" class="btn btn--green" style="margin-top:20px;">Записаться на приём</a>
         </div>
     `;
-
-    // Обновляем ссылку записи
-    document.querySelector('a[href*="appointment"]').href = `/appointment/?doctor=${doctorId}`;
 }
 
 async function loadReviews() {
@@ -107,16 +117,17 @@ async function loadReviews() {
         return;
     }
 
-    grid.innerHTML = reviews.map(r => `
-        <div class="review-card">
+    grid.innerHTML = reviews.map((r, i) => `
+        <div class="review-card reveal" style="--i:${i % 4}">
             <div class="review-card__header">
-                <span class="review-card__author">${r.author_name}</span>
+                <span class="review-card__author">${esc(r.author_name)}</span>
                 <span class="review-card__rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span>
             </div>
-            <p class="review-card__text">${r.text}</p>
-            <div class="review-card__date">${formatDate(r.created_at)}</div>
+            <p class="review-card__text">${esc(r.text)}</p>
+            <div class="review-card__date">${esc(formatDate(r.created_at))}</div>
         </div>
     `).join('');
+    revealScan(grid);
 }
 
 async function loadDoctorServices() {
@@ -135,11 +146,11 @@ async function loadDoctorServices() {
         return;
     }
 
-    grid.innerHTML = items.map(svc => `
-        <div class="card">
+    grid.innerHTML = items.map((svc, i) => `
+        <div class="card reveal" style="--i:${i % 4}">
             <div class="card__body">
-                <div class="card__title">${svc.name}</div>
-                <div class="card__subtitle">${svc.duration_minutes} мин.</div>
+                <div class="card__title">${esc(svc.name)}</div>
+                <div class="card__subtitle">${esc(svc.duration_minutes)} мин.</div>
                 <div class="card__footer">
                     <span class="card__price">${Number(svc.price).toLocaleString('ru-RU')} ₽</span>
                     <a href="/appointment/?doctor=${doctorId}&service=${svc.id}" class="btn btn--sm btn--navy">Записаться</a>
@@ -147,6 +158,7 @@ async function loadDoctorServices() {
             </div>
         </div>
     `).join('');
+    revealScan(grid);
 }
 
 loadDoctor();

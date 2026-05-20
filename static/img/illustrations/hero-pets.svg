@@ -1,0 +1,68 @@
+<svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Кошка и собака">
+  <defs>
+    <clipPath id="petClip"><rect width="480" height="480"/></clipPath>
+  </defs>
+  <g clip-path="url(#petClip)">
+    <rect width="480" height="480" fill="#E3F1F0"/>
+    <!-- soft accent blobs -->
+    <circle cx="86" cy="92" r="54" fill="#0E8C8B" opacity="0.12"/>
+    <circle cx="408" cy="120" r="34" fill="#E79819" opacity="0.18"/>
+    <circle cx="404" cy="392" r="60" fill="#6EB17E" opacity="0.16"/>
+
+    <!-- floor -->
+    <ellipse cx="240" cy="430" rx="190" ry="26" fill="#0E8C8B" opacity="0.10"/>
+
+    <!-- ===== DOG (left) ===== -->
+    <g>
+      <!-- body -->
+      <path d="M150 430c-44 0-70-30-70-70 0-44 30-78 74-78 40 0 66 30 66 74 0 46-28 74-70 74z" fill="#E79819"/>
+      <!-- ears -->
+      <path d="M104 252c-20-6-30 18-22 40 8 20 30 16 36 2z" fill="#C9800F"/>
+      <path d="M196 252c20-6 30 18 22 40-8 20-30 16-36 2z" fill="#C9800F"/>
+      <!-- head -->
+      <circle cx="150" cy="300" r="62" fill="#F2A93B"/>
+      <!-- muzzle -->
+      <ellipse cx="150" cy="328" rx="34" ry="28" fill="#FBE3BD"/>
+      <circle cx="150" cy="318" r="9" fill="#173E4C"/>
+      <path d="M150 327v10c0 8-8 12-14 8" fill="none" stroke="#173E4C" stroke-width="4" stroke-linecap="round"/>
+      <!-- eyes -->
+      <circle cx="128" cy="292" r="8" fill="#173E4C"/>
+      <circle cx="172" cy="292" r="8" fill="#173E4C"/>
+      <circle cx="130" cy="289" r="2.6" fill="#fff"/>
+      <circle cx="174" cy="289" r="2.6" fill="#fff"/>
+      <!-- collar + tag -->
+      <path d="M112 352a52 52 0 0 0 76 0" fill="none" stroke="#0E8C8B" stroke-width="12" stroke-linecap="round"/>
+      <circle cx="150" cy="372" r="9" fill="#fff"/>
+      <path d="M147 369h6v6h-6z" fill="#0E8C8B"/>
+      <path d="M144 372h12M150 366v12" stroke="#0E8C8B" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- ===== CAT (right) ===== -->
+    <g>
+      <!-- body -->
+      <path d="M330 432c-40 0-64-26-64-66 0-42 28-72 68-72 38 0 62 28 62 70 0 44-26 68-66 68z" fill="#173E4C"/>
+      <!-- tail -->
+      <path d="M392 392c30 4 44-20 38-44" fill="none" stroke="#173E4C" stroke-width="18" stroke-linecap="round"/>
+      <!-- ears -->
+      <path d="M292 248l16 40 22-30z" fill="#173E4C"/>
+      <path d="M388 248l-16 40-22-30z" fill="#173E4C"/>
+      <path d="M300 258l9 22 11-16z" fill="#FC8C7A"/>
+      <path d="M380 258l-9 22-11-16z" fill="#FC8C7A"/>
+      <!-- head -->
+      <circle cx="340" cy="300" r="58" fill="#21586B"/>
+      <!-- eyes -->
+      <ellipse cx="320" cy="298" rx="7" ry="10" fill="#6EB17E"/>
+      <ellipse cx="360" cy="298" rx="7" ry="10" fill="#6EB17E"/>
+      <ellipse cx="320" cy="298" rx="2.4" ry="7" fill="#173E4C"/>
+      <ellipse cx="360" cy="298" rx="2.4" ry="7" fill="#173E4C"/>
+      <!-- nose + mouth -->
+      <path d="M334 318h12l-6 7z" fill="#FC8C7A"/>
+      <path d="M340 325v6M340 331c-6 0-9-3-9-6M340 331c6 0 9-3 9-6" fill="none" stroke="#173E4C" stroke-width="3" stroke-linecap="round"/>
+      <!-- whiskers -->
+      <path d="M312 320l-26-6M312 328l-26 4M368 320l26-6M368 328l26 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity="0.8"/>
+    </g>
+
+    <!-- floating heart -->
+    <path d="M240 96c-3-7-15-7-15 3 0 7 15 16 15 16s15-9 15-16c0-10-12-10-15-3z" fill="#FC5B3F"/>
+  </g>
+</svg>

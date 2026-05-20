@@ -1,0 +1,33 @@
+<svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ветеринарные услуги">
+  <defs><clipPath id="svcClip"><rect width="480" height="480"/></clipPath></defs>
+  <g clip-path="url(#svcClip)">
+    <rect width="480" height="480" fill="#E3F1F0"/>
+    <circle cx="92" cy="96" r="56" fill="#0E8C8B" opacity="0.12"/>
+    <circle cx="404" cy="118" r="34" fill="#E79819" opacity="0.18"/>
+    <circle cx="402" cy="392" r="58" fill="#6EB17E" opacity="0.16"/>
+    <ellipse cx="240" cy="430" rx="180" ry="24" fill="#0E8C8B" opacity="0.10"/>
+
+    <!-- stethoscope -->
+    <path d="M150 150c0 36 22 64 58 70" fill="none" stroke="#173E4C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M150 150v-14M178 150v-14" stroke="#173E4C" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="150" cy="130" r="7" fill="#173E4C"/>
+    <circle cx="178" cy="130" r="7" fill="#173E4C"/>
+    <circle cx="214" cy="226" r="20" fill="#0E8C8B"/>
+    <circle cx="214" cy="226" r="10" fill="#E3F1F0"/>
+
+    <!-- medical bag -->
+    <rect x="156" y="252" width="168" height="120" rx="22" fill="#0E8C8B"/>
+    <path d="M206 252v-14a18 18 0 0 1 18-18h32a18 18 0 0 1 18 18v14" fill="none" stroke="#0B6E6D" stroke-width="12" stroke-linecap="round"/>
+    <rect x="156" y="288" width="168" height="20" fill="#0B6E6D"/>
+    <!-- cross -->
+    <path d="M232 318h16v14h14v16h-14v14h-16v-14h-14v-16h14z" fill="#fff"/>
+
+    <!-- paw badge -->
+    <circle cx="330" cy="208" r="40" fill="#E79819"/>
+    <circle cx="318" cy="196" r="5" fill="#fff"/><circle cx="332" cy="190" r="5" fill="#fff"/><circle cx="346" cy="196" r="5" fill="#fff"/>
+    <path d="M316 214c0-7 6-12 14-12s14 5 14 12c0 6-6 8-14 8s-14-2-14-8z" fill="#fff"/>
+
+    <!-- floating heart -->
+    <path d="M150 250c-3-7-15-7-15 3 0 7 15 16 15 16s15-9 15-16c0-10-12-10-15-3z" fill="#FC5B3F"/>
+  </g>
+</svg>

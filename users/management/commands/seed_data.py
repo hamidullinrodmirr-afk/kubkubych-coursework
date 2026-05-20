@@ -42,40 +42,61 @@ class Command(BaseCommand):
                 'last_name': 'Иванов', 'phone': '+7-999-111-11-11',
                 'specialties': ['Терапия', 'Кардиология'],
                 'experience': 12, 'education': 'МГАВМиБ им. Скрябина',
-                'bio': 'Опытный терапевт и кардиолог. Специализируется на лечении собак и кошек.',
+                'bio': 'Опытный терапевт и кардиолог. Специализируется на лечении собак и кошек. '
+                       'Регулярно повышает квалификацию на международных конференциях.',
                 'consultation_price': '2000.00',
+                'photo': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop',
             },
             {
                 'email': 'petrova@petcare.ru', 'first_name': 'Елена',
                 'last_name': 'Петрова', 'phone': '+7-999-222-22-22',
                 'specialties': ['Хирургия'],
                 'experience': 8, 'education': 'РУДН, ветеринарный факультет',
-                'bio': 'Хирург высшей категории. Проводит операции любой сложности.',
+                'bio': 'Хирург высшей категории. Проводит операции любой сложности, '
+                       'включая ортопедические и абдоминальные вмешательства.',
                 'consultation_price': '2500.00',
+                'photo': 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop',
             },
             {
                 'email': 'sidorov@petcare.ru', 'first_name': 'Дмитрий',
                 'last_name': 'Сидоров', 'phone': '+7-999-333-33-33',
                 'specialties': ['Офтальмология', 'Терапия'],
                 'experience': 6, 'education': 'СПбГАВМ',
-                'bio': 'Специалист по заболеваниям глаз у домашних животных.',
+                'bio': 'Специалист по заболеваниям глаз у домашних животных. '
+                       'Владеет современными методами диагностики и микрохирургии глаза.',
                 'consultation_price': '1800.00',
+                'photo': 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop',
             },
             {
                 'email': 'kuznetsova@petcare.ru', 'first_name': 'Анна',
                 'last_name': 'Кузнецова', 'phone': '+7-999-444-44-44',
                 'specialties': ['Дерматология', 'Терапия'],
                 'experience': 10, 'education': 'МГАВМиБ им. Скрябина',
-                'bio': 'Дерматолог с большим опытом лечения аллергий и кожных заболеваний.',
+                'bio': 'Дерматолог с большим опытом лечения аллергий и кожных заболеваний. '
+                       'Применяет комплексный подход к диагностике и лечению.',
                 'consultation_price': '2200.00',
+                'photo': 'https://images.unsplash.com/photo-1594824476967-48c8b964ac31?w=400&h=400&fit=crop',
             },
             {
                 'email': 'volkov@petcare.ru', 'first_name': 'Сергей',
                 'last_name': 'Волков', 'phone': '+7-999-555-55-55',
                 'specialties': ['Стоматология'],
                 'experience': 5, 'education': 'Казанская ГАВМ',
-                'bio': 'Ветеринарный стоматолог. Чистка, лечение и удаление зубов.',
+                'bio': 'Ветеринарный стоматолог. Чистка, лечение и удаление зубов. '
+                       'Безболезненные процедуры с использованием современного оборудования.',
                 'consultation_price': '1500.00',
+                'photo': 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=400&fit=crop',
+            },
+            {
+                'email': 'morozova@petcare.ru', 'first_name': 'Ольга',
+                'last_name': 'Морозова', 'phone': '+7-999-666-66-66',
+                'specialties': ['Кардиология', 'Хирургия'],
+                'experience': 15, 'education': 'МГАВМиБ им. Скрябина',
+                'bio': 'Кардиохирург с 15-летним стажем. Специализируется на диагностике и '
+                       'хирургическом лечении врождённых и приобретённых пороков сердца у животных. '
+                       'Автор научных публикаций по ветеринарной кардиологии.',
+                'consultation_price': '3000.00',
+                'photo': 'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=400&h=400&fit=crop',
             },
         ]
 
@@ -103,6 +124,10 @@ class Command(BaseCommand):
                     'consultation_price': Decimal(d['consultation_price']),
                 },
             )
+            # Обновляем фото (URL), даже если врач уже существовал
+            if d.get('photo') and not doctor.photo_url:
+                doctor.photo_url = d['photo']
+                doctor.save(update_fields=['photo_url'])
             for sp_name in d['specialties']:
                 doctor.specialties.add(specs[sp_name])
             doctors.append(doctor)
@@ -177,8 +202,9 @@ class Command(BaseCommand):
 
         self.stdout.write(f'  Услуги: {len(services)}')
 
-        # ─── Клиент и питомцы ───────────────────
-        client, created = User.objects.get_or_create(
+        # ─── Клиенты и питомцы ─────────────────
+        # Клиент 1 — Мария Смирнова
+        client1, created = User.objects.get_or_create(
             email='client@example.com',
             defaults={
                 'first_name': 'Мария',
@@ -188,19 +214,18 @@ class Command(BaseCommand):
             },
         )
         if created:
-            client.set_password('client123')
-            client.save()
+            client1.set_password('client123')
+            client1.save()
 
-        pets_data = [
-            ('Барсик', 'cat', 'Британская', 36, '5.20', 'Аллергия на курицу'),
-            ('Рекс', 'dog', 'Немецкая овчарка', 48, '32.00', ''),
+        pets_client1 = []
+        pets_data_1 = [
+            ('Барсик', 'cat', 'Британская короткошёрстная', 36, '5.20', 'Аллергия на курицу'),
+            ('Рекс', 'dog', 'Немецкая овчарка', 48, '32.00', 'Прививки актуальны до 2027 г.'),
             ('Кеша', 'bird', 'Волнистый попугай', 12, '0.04', ''),
         ]
-
-        pets = []
-        for name, species, breed, age, weight, notes in pets_data:
+        for name, species, breed, age, weight, notes in pets_data_1:
             pet, _ = Pet.objects.get_or_create(
-                owner=client, name=name,
+                owner=client1, name=name,
                 defaults={
                     'species': species,
                     'breed': breed,
@@ -209,61 +234,296 @@ class Command(BaseCommand):
                     'health_notes': notes,
                 },
             )
-            pets.append(pet)
+            pets_client1.append(pet)
 
-        self.stdout.write(f'  Питомцы: {len(pets)}')
+        # Клиент 2 — Игорь Петров
+        client2, created = User.objects.get_or_create(
+            email='petrov@mail.ru',
+            defaults={
+                'first_name': 'Игорь',
+                'last_name': 'Петров',
+                'phone': '+7-999-777-77-77',
+                'role': 'client',
+            },
+        )
+        if created:
+            client2.set_password('client123')
+            client2.save()
+
+        pets_client2 = []
+        pets_data_2 = [
+            ('Мурка', 'cat', 'Шотландская вислоухая', 24, '4.10',
+             'Склонность к мочекаменной болезни'),
+            ('Бобик', 'dog', 'Лабрадор-ретривер', 60, '28.50',
+             'Хромота на левую заднюю лапу'),
+        ]
+        for name, species, breed, age, weight, notes in pets_data_2:
+            pet, _ = Pet.objects.get_or_create(
+                owner=client2, name=name,
+                defaults={
+                    'species': species,
+                    'breed': breed,
+                    'age': age,
+                    'weight': Decimal(weight),
+                    'health_notes': notes,
+                },
+            )
+            pets_client2.append(pet)
+
+        all_pets = pets_client1 + pets_client2
+        self.stdout.write(f'  Питомцы: {len(all_pets)}')
 
         # ─── Записи на приём ────────────────────
         today = timezone.now().date()
-        if not Appointment.objects.filter(client=client).exists():
-            # Завершённая запись (вчера)
+        appointments_created = 0
+
+        if not Appointment.objects.filter(client=client1).exists():
+            # Завершённые записи (прошлые даты) — клиент 1
             appt1 = Appointment.objects.create(
-                client=client,
-                doctor=doctors[0],
-                pet=pets[0],
-                service=services[0],
-                date=today - timedelta(days=1),
+                client=client1,
+                doctor=doctors[0],  # Иванов — терапия
+                pet=pets_client1[0],  # Барсик
+                service=services[0],  # Первичный осмотр
+                date=today - timedelta(days=14),
                 time_slot=time(10, 0),
                 status='completed',
+                comment='Жалобы на снижение аппетита.',
+            )
+            appt2 = Appointment.objects.create(
+                client=client1,
+                doctor=doctors[1],  # Петрова — хирургия
+                pet=pets_client1[0],  # Барсик
+                service=services[5],  # Кастрация кота
+                date=today - timedelta(days=7),
+                time_slot=time(9, 0),
+                status='completed',
+                comment='Плановая кастрация, подготовка — голодная диета 12 часов.',
+            )
+            appt3 = Appointment.objects.create(
+                client=client1,
+                doctor=doctors[3],  # Кузнецова — дерматология
+                pet=pets_client1[0],  # Барсик
+                service=services[10],  # Лечение дерматита
+                date=today - timedelta(days=5),
+                time_slot=time(11, 30),
+                status='completed',
+                comment='Покраснение на животе, зуд.',
+            )
+            appt4 = Appointment.objects.create(
+                client=client1,
+                doctor=doctors[4],  # Волков — стоматология
+                pet=pets_client1[1],  # Рекс
+                service=services[12],  # Чистка зубов
+                date=today - timedelta(days=3),
+                time_slot=time(15, 0),
+                status='completed',
+                comment='Плановая чистка зубов, зубной камень.',
             )
 
-            # Подтверждённая запись (завтра)
-            appt2 = Appointment.objects.create(
-                client=client,
-                doctor=doctors[1],
-                pet=pets[1],
-                service=services[5],
+            # Подтверждённая запись (завтра) — клиент 1
+            appt5 = Appointment.objects.create(
+                client=client1,
+                doctor=doctors[2],  # Сидоров — офтальмология
+                pet=pets_client1[0],  # Барсик
+                service=services[8],  # Осмотр глазного дна
                 date=today + timedelta(days=1),
                 time_slot=time(14, 0),
                 status='confirmed',
+                comment='Слезотечение из правого глаза.',
             )
 
-            # Ожидающая запись (через 3 дня)
-            appt3 = Appointment.objects.create(
-                client=client,
-                doctor=doctors[3],
-                pet=pets[0],
-                service=services[10],
-                date=today + timedelta(days=3),
-                time_slot=time(11, 30),
+            # Ожидающая запись (через 5 дней) — клиент 1
+            appt6 = Appointment.objects.create(
+                client=client1,
+                doctor=doctors[0],  # Иванов — терапия
+                pet=pets_client1[1],  # Рекс
+                service=services[2],  # Вакцинация
+                date=today + timedelta(days=5),
+                time_slot=time(10, 30),
                 status='pending',
+                comment='Плановая ежегодная вакцинация.',
             )
 
-            self.stdout.write('  Записи: 3')
+            # Отменённая запись — клиент 1
+            appt7 = Appointment.objects.create(
+                client=client1,
+                doctor=doctors[5],  # Морозова — кардиология
+                pet=pets_client1[1],  # Рекс
+                service=services[4],  # ЭКГ
+                date=today - timedelta(days=2),
+                time_slot=time(12, 0),
+                status='cancelled',
+                cancel_reason='Клиент заболел, перенос на другую дату.',
+            )
 
-            # ─── Отзыв ──────────────────────────
+            appointments_created += 7
+
+            # ─── Отзывы от клиента 1 ──────────────
             Review.objects.get_or_create(
                 appointment=appt1,
                 defaults={
-                    'author': client,
+                    'author': client1,
                     'doctor': doctors[0],
                     'rating': 5,
                     'text': 'Отличный врач! Барсику стало значительно лучше после лечения. '
-                            'Алексей Иванович очень внимательный и профессиональный.',
+                            'Алексей Иванович очень внимательный и профессиональный. '
+                            'Подробно объяснил причину плохого аппетита и назначил эффективное лечение.',
                     'is_approved': True,
                 },
             )
-            self.stdout.write('  Отзывы: 1')
+            Review.objects.get_or_create(
+                appointment=appt2,
+                defaults={
+                    'author': client1,
+                    'doctor': doctors[1],
+                    'rating': 5,
+                    'text': 'Елена Петрова провела кастрацию Барсика очень аккуратно. '
+                            'Операция прошла без осложнений, кот быстро восстановился. '
+                            'Отдельное спасибо за подробные инструкции по уходу после операции.',
+                    'is_approved': True,
+                },
+            )
+            Review.objects.get_or_create(
+                appointment=appt3,
+                defaults={
+                    'author': client1,
+                    'doctor': doctors[3],
+                    'rating': 4,
+                    'text': 'Анна Кузнецова — грамотный специалист. Быстро определила причину '
+                            'дерматита у Барсика и назначила лечение. Единственный минус — '
+                            'пришлось подождать в очереди около 20 минут, хотя записывались заранее.',
+                    'is_approved': True,
+                },
+            )
+            Review.objects.get_or_create(
+                appointment=appt4,
+                defaults={
+                    'author': client1,
+                    'doctor': doctors[4],
+                    'rating': 4,
+                    'text': 'Рексу почистили зубы ультразвуком. Сергей Волков работает '
+                            'аккуратно, собака перенесла процедуру спокойно. Результат '
+                            'отличный — зубной камень полностью удалён. Рекомендую!',
+                    'is_approved': True,
+                },
+            )
+
+        if not Appointment.objects.filter(client=client2).exists():
+            # Завершённые записи — клиент 2
+            appt8 = Appointment.objects.create(
+                client=client2,
+                doctor=doctors[0],  # Иванов — терапия
+                pet=pets_client2[0],  # Мурка
+                service=services[0],  # Первичный осмотр
+                date=today - timedelta(days=10),
+                time_slot=time(11, 0),
+                status='completed',
+                comment='Первичный осмотр, жалобы на вялость.',
+            )
+            appt9 = Appointment.objects.create(
+                client=client2,
+                doctor=doctors[5],  # Морозова — кардиология
+                pet=pets_client2[1],  # Бобик
+                service=services[4],  # ЭКГ
+                date=today - timedelta(days=6),
+                time_slot=time(13, 0),
+                status='completed',
+                comment='Контрольное ЭКГ, шум в сердце.',
+            )
+            appt10 = Appointment.objects.create(
+                client=client2,
+                doctor=doctors[2],  # Сидоров — офтальмология
+                pet=pets_client2[0],  # Мурка
+                service=services[9],  # Лечение конъюнктивита
+                date=today - timedelta(days=4),
+                time_slot=time(16, 0),
+                status='completed',
+                comment='Покраснение и выделения из левого глаза.',
+            )
+
+            # Подтверждённая запись (через 2 дня) — клиент 2
+            Appointment.objects.create(
+                client=client2,
+                doctor=doctors[1],  # Петрова — хирургия
+                pet=pets_client2[1],  # Бобик
+                service=services[7],  # Удаление новообразований
+                date=today + timedelta(days=2),
+                time_slot=time(9, 30),
+                status='confirmed',
+                comment='Небольшое образование на правом боку, рекомендовано удаление.',
+            )
+
+            # Ожидающая запись (через 7 дней) — клиент 2
+            Appointment.objects.create(
+                client=client2,
+                doctor=doctors[3],  # Кузнецова — дерматология
+                pet=pets_client2[0],  # Мурка
+                service=services[11],  # Трихоскопия
+                date=today + timedelta(days=7),
+                time_slot=time(10, 0),
+                status='pending',
+                comment='Выпадение шерсти на спине.',
+            )
+
+            # Подтверждённая запись на послезавтра — клиент 2
+            Appointment.objects.create(
+                client=client2,
+                doctor=doctors[0],  # Иванов — терапия
+                pet=pets_client2[0],  # Мурка
+                service=services[1],  # Повторный осмотр
+                date=today + timedelta(days=4),
+                time_slot=time(14, 30),
+                status='confirmed',
+                comment='Контрольный осмотр после лечения.',
+            )
+
+            appointments_created += 6
+
+            # ─── Отзывы от клиента 2 ──────────────
+            Review.objects.get_or_create(
+                appointment=appt8,
+                defaults={
+                    'author': client2,
+                    'doctor': doctors[0],
+                    'rating': 5,
+                    'text': 'Обратились к Алексею Иванову с Муркой — кошка была вялой и '
+                            'плохо ела. Врач провёл тщательный осмотр, взял анализы. '
+                            'Диагноз поставили быстро, лечение помогло уже через два дня. '
+                            'Очень благодарны!',
+                    'is_approved': True,
+                },
+            )
+            Review.objects.get_or_create(
+                appointment=appt9,
+                defaults={
+                    'author': client2,
+                    'doctor': doctors[5],
+                    'rating': 4,
+                    'text': 'Ольга Морозова — отличный кардиолог. Провела ЭКГ Бобику, '
+                            'всё подробно объяснила. Обнаружила небольшой шум в сердце, '
+                            'назначила поддерживающую терапию. Единственное — хотелось бы '
+                            'более подробную распечатку результатов.',
+                    'is_approved': True,
+                },
+            )
+            Review.objects.get_or_create(
+                appointment=appt10,
+                defaults={
+                    'author': client2,
+                    'doctor': doctors[2],
+                    'rating': 3,
+                    'text': 'Дмитрий Сидоров осмотрел Мурку и назначил капли от '
+                            'конъюнктивита. Лечение в целом помогло, но пришлось прийти '
+                            'повторно — первый курс капель оказался недостаточным. '
+                            'Хотелось бы более точного назначения с первого раза.',
+                    'is_approved': True,
+                },
+            )
+
+        total_appointments = Appointment.objects.count()
+        total_reviews = Review.objects.count()
+        self.stdout.write(f'  Записи на приём: {total_appointments}')
+        self.stdout.write(f'  Отзывы: {total_reviews}')
 
         # ─── Админ ──────────────────────────────
         admin, created = User.objects.get_or_create(
@@ -283,6 +543,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS('\nГотово! Тестовые данные загружены.'))
         self.stdout.write(f'\nДанные для входа:')
-        self.stdout.write(f'  Клиент:  client@example.com / client123')
-        self.stdout.write(f'  Врач:    ivanov@petcare.ru / doctor123')
-        self.stdout.write(f'  Админ:   admin@petcare.ru / admin123')
+        self.stdout.write(f'  Клиент 1: client@example.com / client123')
+        self.stdout.write(f'  Клиент 2: petrov@mail.ru / client123')
+        self.stdout.write(f'  Врач:     ivanov@petcare.ru / doctor123')
+        self.stdout.write(f'  Админ:    admin@petcare.ru / admin123')

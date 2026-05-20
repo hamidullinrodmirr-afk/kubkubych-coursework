@@ -32,6 +32,7 @@ class Doctor(models.Model):
     education = models.TextField('Образование', blank=True)
     bio = models.TextField('Биография', blank=True)
     photo = models.ImageField('Фото', upload_to='doctors/', blank=True, null=True)
+    photo_url = models.URLField('Фото (ссылка)', blank=True, default='')
     consultation_price = models.DecimalField(
         'Стоимость консультации (руб.)',
         max_digits=10,

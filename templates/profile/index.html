@@ -81,12 +81,12 @@ async function loadAppointments() {
                 <tbody>
                     ${items.map(a => `
                         <tr>
-                            <td>${formatDate(a.date)}</td>
-                            <td>${a.time_slot?.slice(0,5) || ''}</td>
-                            <td>${a.doctor_name}</td>
-                            <td>${a.service_name}</td>
-                            <td>${a.pet_name}</td>
-                            <td><span class="status-badge status-badge--${a.status}">${a.status_display}</span></td>
+                            <td>${esc(formatDate(a.date))}</td>
+                            <td>${esc(a.time_slot?.slice(0,5) || '')}</td>
+                            <td>${esc(a.doctor_name)}</td>
+                            <td>${esc(a.service_name)}</td>
+                            <td>${esc(a.pet_name)}</td>
+                            <td><span class="status-badge status-badge--${esc(a.status)}">${esc(a.status_display)}</span></td>
                             <td>${a.status !== 'cancelled' && a.status !== 'completed'
                                 ? `<button class="btn btn--sm btn--outline" onclick="cancelAppt(${a.id})">Отменить</button>`
                                 : ''}</td>
@@ -99,9 +99,19 @@ async function loadAppointments() {
 }
 
 async function cancelAppt(id) {
-    if (!confirm('Отменить запись?')) return;
-    const resp = await API.post(`/appointments/${id}/cancel/`, {});
-    if (resp && resp.ok) loadAppointments();
+    if (!confirm('Вы уверены, что хотите отменить запись?')) return;
+    try {
+        const resp = await API.post(`/appointments/${id}/cancel/`, {});
+        if (resp && resp.ok) {
+            loadAppointments();
+        } else {
+            let msg = 'Не удалось отменить запись';
+            try { const err = await resp?.json(); msg = Object.values(err).flat().join('. ') || msg; } catch(e) {}
+            alert(msg);
+        }
+    } catch (e) {
+        alert('Ошибка соединения с сервером');
+    }
 }
 
 async function loadPets() {
@@ -122,13 +132,13 @@ async function loadPets() {
     if (items.length === 0) {
         html += '<p style="color:var(--gray);text-align:center;padding:40px;">У вас пока нет питомцев</p>';
     } else {
-        html += '<div class="cards-grid">' + items.map(p => `
-            <div class="card">
+        html += '<div class="cards-grid">' + items.map((p, i) => `
+            <div class="card reveal" style="--i:${i % 4}">
                 <div class="card__body">
-                    <div class="card__title">${p.name}</div>
-                    <div class="card__subtitle">${p.species_display} · ${p.breed || 'Без породы'}</div>
-                    <p style="font-size:0.85rem;color:var(--gray);">Возраст: ${p.age} мес. · Вес: ${p.weight} кг</p>
-                    ${p.health_notes ? `<p style="font-size:0.85rem;color:var(--gray);margin-top:4px;">${p.health_notes}</p>` : ''}
+                    <div class="card__title">${esc(p.name)}</div>
+                    <div class="card__subtitle">${esc(p.species_display)} · ${esc(p.breed || 'Без породы')}</div>
+                    <p style="font-size:0.85rem;color:var(--muted);">Возраст: ${esc(p.age)} мес. · Вес: ${esc(p.weight)} кг</p>
+                    ${p.health_notes ? `<p style="font-size:0.85rem;color:var(--muted);margin-top:4px;">${esc(p.health_notes)}</p>` : ''}
                     <div style="margin-top:12px;display:flex;gap:8px;">
                         <button class="btn btn--sm btn--outline" onclick="deletePet(${p.id})">Удалить</button>
                     </div>
@@ -138,6 +148,7 @@ async function loadPets() {
     }
 
     content.innerHTML = html;
+    if (typeof revealScan === 'function') revealScan(content);
 }
 
 function showAddPetForm() {
@@ -168,34 +179,62 @@ function showAddPetForm() {
 }
 
 async function addPet() {
+    const name = document.getElementById('petName').value.trim();
+    const age = document.getElementById('petAge').value;
+    const weight = document.getElementById('petWeight').value;
+
+    const container = document.getElementById('petFormContainer');
+    let alertBox = document.getElementById('petFormAlerts');
+    if (!alertBox) {
+        alertBox = document.createElement('div');
+        alertBox.id = 'petFormAlerts';
+        container.querySelector('div').prepend(alertBox);
+    }
+    alertBox.innerHTML = '';
+
+    if (!name) { showAlert(alertBox, 'Укажите кличку питомца'); return; }
+    if (!age || age < 0) { showAlert(alertBox, 'Укажите корректный возраст'); return; }
+    if (!weight || weight <= 0) { showAlert(alertBox, 'Укажите корректный вес'); return; }
+
     const data = {
-        name: document.getElementById('petName').value,
+        name: name,
         species: document.getElementById('petSpecies').value,
         breed: document.getElementById('petBreed').value,
-        age: parseInt(document.getElementById('petAge').value),
-        weight: document.getElementById('petWeight').value,
+        age: parseInt(age),
+        weight: weight,
         health_notes: document.getElementById('petHealth').value,
     };
-    const resp = await API.post('/pets/', data);
-    if (resp && resp.ok) loadPets();
-    else {
-        const err = await resp?.json();
-        const msg = Object.values(err || {}).flat().join('. ') || 'Ошибка при добавлении питомца';
-        let alertBox = document.getElementById('petFormAlerts');
-        if (!alertBox) {
-            alertBox = document.createElement('div');
-            alertBox.id = 'petFormAlerts';
-            document.getElementById('petFormContainer').prepend(alertBox);
+
+    try {
+        const resp = await API.post('/pets/', data);
+        if (resp && resp.ok) {
+            showAlert(alertBox, 'Питомец успешно добавлен!', 'success');
+            setTimeout(() => loadPets(), 1000);
+        } else {
+            let msg = 'Ошибка при добавлении питомца';
+            try {
+                const err = await resp?.json();
+                if (err) msg = Object.values(err).flat().join('. ');
+            } catch(e) {}
+            showAlert(alertBox, msg);
         }
-        alertBox.innerHTML = '';
-        showAlert(alertBox, msg);
+    } catch (e) {
+        showAlert(alertBox, 'Ошибка соединения с сервером');
     }
 }
 
 async function deletePet(id) {
-    if (!confirm('Удалить питомца?')) return;
-    await API.delete(`/pets/${id}/`);
-    loadPets();
+    if (!confirm('Вы уверены, что хотите удалить питомца?')) return;
+    try {
+        const resp = await API.delete(`/pets/${id}/`);
+        if (resp && (resp.ok || resp.status === 204)) {
+            loadPets();
+        } else {
+            alert('Не удалось удалить питомца');
+        }
+    } catch (e) {
+        alert('Ошибка соединения с сервером');
+    }
 }
 
 function showSettings() {
@@ -203,11 +242,11 @@ function showSettings() {
     content.innerHTML = `
         <h3 style="margin-bottom:20px;">Настройки профиля</h3>
         <div class="form-row">
-            <div class="form-group"><label>Фамилия</label><input class="form-control" id="setLastName" value="${userProfile.last_name}"></div>
-            <div class="form-group"><label>Имя</label><input class="form-control" id="setFirstName" value="${userProfile.first_name}"></div>
+            <div class="form-group"><label>Фамилия</label><input class="form-control" id="setLastName" value="${esc(userProfile.last_name)}"></div>
+            <div class="form-group"><label>Имя</label><input class="form-control" id="setFirstName" value="${esc(userProfile.first_name)}"></div>
         </div>
-        <div class="form-group"><label>Телефон</label><input class="form-control" id="setPhone" value="${userProfile.phone || ''}"></div>
-        <div class="form-group"><label>Email</label><input class="form-control" value="${userProfile.email}" disabled></div>
+        <div class="form-group"><label>Телефон</label><input class="form-control" id="setPhone" value="${esc(userProfile.phone || '')}"></div>
+        <div class="form-group"><label>Email</label><input class="form-control" value="${esc(userProfile.email)}" disabled></div>
         <button class="btn btn--green" onclick="saveProfile()" style="margin-top:16px;">Сохранить</button>
         <div id="settingsAlerts" style="margin-top:16px;"></div>
     `;
@@ -216,19 +255,49 @@ function showSettings() {
 async function saveProfile() {
     const alerts = document.getElementById('settingsAlerts');
     alerts.innerHTML = '';
-    const resp = await API.patch('/auth/me/', {
-        first_name: document.getElementById('setFirstName').value,
-        last_name: document.getElementById('setLastName').value,
-        phone: document.getElementById('setPhone').value,
-    });
-    if (resp && resp.ok) {
-        userProfile = await resp.json();
-        document.getElementById('profileName').textContent = `${userProfile.last_name} ${userProfile.first_name}`;
-        showAlert(alerts, 'Профиль обновлён', 'success');
-    } else {
-        const err = await resp?.json();
-        const msg = Object.values(err || {}).flat().join('. ') || 'Не удалось сохранить профиль';
-        showAlert(alerts, msg);
+    const firstName = document.getElementById('setFirstName').value.trim();
+    const lastName = document.getElementById('setLastName').value.trim();
+    const phone = document.getElementById('setPhone').value.trim();
+
+    if (!firstName || !lastName) {
+        showAlert(alerts, 'Имя и фамилия обязательны для заполнения');
+        return;
+    }
+
+    if (phone && !/^[\d\+\-\(\)\s]{7,20}$/.test(phone)) {
+        showAlert(alerts, 'Некорректный формат телефона');
+        return;
+    }
+
+    try {
+        const resp = await API.patch('/auth/me/', {
+            first_name: firstName,
+            last_name: lastName,
+            phone: phone,
+        });
+        if (resp && resp.ok) {
+            userProfile = await resp.json();
+            document.getElementById('profileName').textContent = `${userProfile.last_name} ${userProfile.first_name}`;
+            showAlert(alerts, 'Профиль успешно обновлён', 'success');
+            updateAuthUI();
+        } else {
+            let msg = 'Не удалось сохранить профиль';
+            try {
+                const err = await resp?.json();
+                if (err) {
+                    const messages = [];
+                    for (const [key, val] of Object.entries(err)) {
+                        const fieldNames = {first_name:'Имя', last_name:'Фамилия', phone:'Телефон'};
+                        const label = fieldNames[key] || key;
+                        messages.push(`${label}: ${Array.isArray(val) ? val.join(', ') : val}`);
+                    }
+                    if (messages.length) msg = messages.join('. ');
+                }
+            } catch (e) {}
+            showAlert(alerts, msg);
+        }
+    } catch (e) {
+        showAlert(alerts, 'Ошибка соединения с сервером');
     }
 }
 
