@@ -58,7 +58,7 @@ function pluralYears(n) {
 async function loadDoctor() {
     const doc = await API.get(`/doctors/${doctorId}/`);
     if (!doc) {
-        document.getElementById('doctorInfo').innerHTML = '<p style="text-align:center;color:var(--gray);padding:40px;">Врач не найден</p>';
+        window.location.replace('/doctors/');
         return;
     }
 

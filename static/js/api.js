@@ -48,7 +48,8 @@ const API = {
 
     async get(url) {
         const resp = await this.request(url);
-        return resp ? resp.json() : null;
+        if (!resp || !resp.ok) return null;
+        return resp.json();
     },
 
     async post(url, data) {
