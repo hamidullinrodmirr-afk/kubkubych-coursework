@@ -1,0 +1,467 @@
+{
+  "info": {
+    "name": "PetCare API",
+    "description": "Коллекция запросов для тестирования API ветеринарной клиники PetCare (Django REST Framework + JWT).\n\nКак пользоваться:\n1. Запустить сервер: python manage.py runserver, наполнить данными: python manage.py seed_data\n2. Открыть папку Auth → выполнить Login. Скрипт автоматически сохранит access/refresh в переменные коллекции.\n3. Все защищённые запросы используют {{access_token}} автоматически (Bearer на уровне коллекции).\n\nТестовые учётки (seed_data):\n- client@example.com / client123 (клиент)\n- ivanov@petcare.ru / doctor123 (врач)\n- admin@petcare.ru / admin123 (админ)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "doctor_id", "value": "1" },
+    { "key": "service_id", "value": "1" },
+    { "key": "pet_id", "value": "1" },
+    { "key": "appointment_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"first_name\": \"Иван\",\n  \"last_name\": \"Петров\",\n  \"phone\": \"+79001234567\",\n  \"password\": \"strongpass123\",\n  \"password_confirm\": \"strongpass123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register", ""]
+            },
+            "description": "Регистрация клиента. Роль client назначается автоматически."
+          }
+        },
+        {
+          "name": "Login (сохраняет токен)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', () => pm.response.code === 200);",
+                  "const data = pm.response.json();",
+                  "if (data.access) {",
+                  "    pm.collectionVariables.set('access_token', data.access);",
+                  "    pm.collectionVariables.set('refresh_token', data.refresh);",
+                  "    console.log('Токен сохранён в переменные коллекции');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"client@example.com\",\n  \"password\": \"client123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login", ""]
+            },
+            "description": "Получение пары JWT-токенов. Test-скрипт автоматически кладёт access/refresh в переменные коллекции."
+          }
+        },
+        {
+          "name": "Refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.access) pm.collectionVariables.set('access_token', data.access);",
+                  "if (data.refresh) pm.collectionVariables.set('refresh_token', data.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh", ""]
+            },
+            "description": "Обновление access-токена по refresh."
+          }
+        },
+        {
+          "name": "Me (профиль)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me", ""]
+            },
+            "description": "Текущий пользователь по JWT. Требует авторизации."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Doctors",
+      "item": [
+        {
+          "name": "List (список врачей)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/doctors/?search=&ordering=-avg_rating",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctors", ""],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "ordering", "value": "-avg_rating" }
+              ]
+            },
+            "description": "Пагинированный список (PAGE_SIZE=12). Поддерживает search и ordering."
+          }
+        },
+        {
+          "name": "Detail (карточка врача)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/doctors/{{doctor_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctors", "{{doctor_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Filter by specialty",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/doctors/?specialty=Терапевт",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctors", ""],
+              "query": [{ "key": "specialty", "value": "Терапевт" }]
+            }
+          }
+        },
+        {
+          "name": "Specialties (справочник)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/doctors/specialties/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctors", "specialties", ""]
+            }
+          }
+        },
+        {
+          "name": "Available slots (свободные окна)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/doctors/{{doctor_id}}/available-slots/?date=2026-06-15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctors", "{{doctor_id}}", "available-slots", ""],
+              "query": [{ "key": "date", "value": "2026-06-15" }]
+            },
+            "description": "Свободные слоты врача на дату (пересечение расписания и существующих записей). Дата должна быть будущей."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "List (услуги)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/services/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", ""]
+            }
+          }
+        },
+        {
+          "name": "Filter by specialty",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/services/?specialty=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "services", ""],
+              "query": [{ "key": "specialty", "value": "1" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pets",
+      "item": [
+        {
+          "name": "List (мои питомцы)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pets/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pets", ""]
+            }
+          }
+        },
+        {
+          "name": "Create (добавить питомца)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.collectionVariables.set('pet_id', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Барсик\",\n  \"species\": \"cat\",\n  \"breed\": \"Британская\",\n  \"age\": 3,\n  \"weight\": 4.5,\n  \"health_notes\": \"Аллергия на курицу\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pets/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pets", ""]
+            },
+            "description": "species: cat | dog | bird | rodent | reptile | other. Владелец проставляется автоматически из токена. Кличка — только буквы и пробелы."
+          }
+        },
+        {
+          "name": "Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pets/{{pet_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pets", "{{pet_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Update (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight\": 5.0,\n  \"health_notes\": \"Здоров\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pets/{{pet_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pets", "{{pet_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Delete",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pets/{{pet_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pets", "{{pet_id}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "List (мои записи)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/appointments/?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "appointments", ""],
+              "query": [{ "key": "status", "value": "pending", "disabled": true }]
+            },
+            "description": "Фильтры: status (pending/confirmed/in_progress/completed/cancelled), date. Клиент видит свои, врач — свои, админ — все."
+          }
+        },
+        {
+          "name": "Create (записаться)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.id) pm.collectionVariables.set('appointment_id', data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor\": {{doctor_id}},\n  \"pet\": {{pet_id}},\n  \"service\": {{service_id}},\n  \"date\": \"2026-06-15\",\n  \"time_slot\": \"10:00\",\n  \"comment\": \"Плановый осмотр\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/appointments/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "appointments", ""]
+            },
+            "description": "date — будущая дата, time_slot — свободный слот из available-slots. Создаётся в статусе pending."
+          }
+        },
+        {
+          "name": "Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/appointments/{{appointment_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "appointments", "{{appointment_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "Confirm (врач/админ)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/appointments/{{appointment_id}}/confirm/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "appointments", "{{appointment_id}}", "confirm", ""]
+            },
+            "description": "pending → confirmed. Только для записи в статусе pending."
+          }
+        },
+        {
+          "name": "Cancel",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancel_reason\": \"Не смогу прийти\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/appointments/{{appointment_id}}/cancel/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "appointments", "{{appointment_id}}", "cancel", ""]
+            },
+            "description": "Отмена из любого статуса, кроме completed/cancelled. cancel_reason опционален."
+          }
+        },
+        {
+          "name": "Complete (врач/админ)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/appointments/{{appointment_id}}/complete/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "appointments", "{{appointment_id}}", "complete", ""]
+            },
+            "description": "confirmed/in_progress → completed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "List (отзывы)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/?doctor={{doctor_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews", ""],
+              "query": [{ "key": "doctor", "value": "{{doctor_id}}" }]
+            }
+          }
+        },
+        {
+          "name": "Create (оставить отзыв)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor\": {{doctor_id}},\n  \"appointment\": {{appointment_id}},\n  \"rating\": 5,\n  \"text\": \"Отличный приём, врач внимательный и профессиональный\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/reviews/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reviews", ""]
+            },
+            "description": "Отзыв разрешён только по своей completed-записи. text ≥ 10 символов. Уходит на модерацию (is_approved=false)."
+          }
+        }
+      ]
+    }
+  ]
+}
