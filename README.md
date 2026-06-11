@@ -8,8 +8,11 @@
 - **Backend:** Django 5.2, Django REST Framework
 - **База данных:** PostgreSQL (SQLite для локальной разработки)
 - **Аутентификация:** JWT (SimpleJWT), OAuth2 (Google, VKontakte)
-- **Фоновые задачи:** Celery + Redis
+- **Фильтрация:** django-filter (FilterSet для врачей, услуг, записей)
+- **Фоновые задачи:** Celery + Redis, периодические — django-celery-beat
 - **Email:** Mailhog (dev), SMTP (prod)
+- **Мониторинг ошибок:** Sentry (включается переменной SENTRY_DSN)
+- **Профилирование:** Django Silk (только при DEBUG, /silk/)
 - **Контейнеризация:** Docker Compose
 - **Frontend:** Django Templates + Vanilla JS
 
@@ -37,6 +40,8 @@ python manage.py runserver
 ```
 
 Откройте http://127.0.0.1:8000/
+
+Профилировщик запросов (Django Silk): http://127.0.0.1:8000/silk/
 
 ### Тестовые учётные записи
 
@@ -77,7 +82,6 @@ reviews/          — отзывы с модерацией
 templates/        — HTML-шаблоны фронтенда
 static/           — CSS, JavaScript
 nginx/            — конфигурация Nginx
-docs/             — техническое задание
 ```
 
 ## API эндпоинты
@@ -109,3 +113,9 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 VK_CLIENT_ID=your_vk_app_id
 VK_CLIENT_SECRET=your_vk_secret_key
 ```
+
+## Sentry
+
+Мониторинг ошибок включается переменной окружения `SENTRY_DSN`
+(локально в `.env`, в Docker — в `.env.docker`). При пустом значении
+интеграция отключена.

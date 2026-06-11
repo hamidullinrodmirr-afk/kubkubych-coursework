@@ -1,6 +1,9 @@
 import os
+import sys
 from pathlib import Path
 from datetime import timedelta
+
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,7 +14,20 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-change-in-producti
 
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1')
 
+TESTING = 'test' in sys.argv
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+if SENTRY_DSN and not TESTING:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.getenv('SENTRY_ENVIRONMENT', 'development'),
+        traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.2')),
+        send_default_pii=True,
+    )
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -21,7 +37,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Third-party
     'rest_framework',
     'django_filters',
     'corsheaders',
@@ -29,7 +44,6 @@ INSTALLED_APPS = [
 
     'django_celery_beat',
 
-    # Local apps
     'users',
     'pets',
     'doctors',
@@ -48,6 +62,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+SILKY_ENABLED = DEBUG and not TESTING
+if SILKY_ENABLED:
+    INSTALLED_APPS.append('silk')
+    MIDDLEWARE.append('silk.middleware.SilkyMiddleware')
+    SILKY_PYTHON_PROFILER = True
+    SILKY_MAX_RECORDED_REQUESTS = 1000
 
 ROOT_URLCONF = 'petcare.urls'
 
@@ -68,7 +89,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'petcare.wsgi.application'
 
-# Database
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
@@ -89,13 +109,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 USE_I18N = True
 USE_TZ = True
 
-# Static & Media
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -105,7 +123,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# DRF
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -120,17 +137,14 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 12,
 }
 
-# JWT
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
 }
 
-# CORS
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
-# OAuth2
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
 GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
 GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/api/auth/oauth/google/callback/')
@@ -139,14 +153,12 @@ VK_CLIENT_ID = os.getenv('VK_CLIENT_ID', '')
 VK_CLIENT_SECRET = os.getenv('VK_CLIENT_SECRET', '')
 VK_REDIRECT_URI = os.getenv('VK_REDIRECT_URI', 'http://localhost:8000/api/auth/oauth/vk/callback/')
 
-# Email (Mailhog for development)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '1025'))
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = 'noreply@petcare.ru'
 
-# Celery
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['json']
@@ -154,18 +166,33 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-# Результаты задач не читаем — не задействуем result backend.
 CELERY_TASK_IGNORE_RESULT = True
-# Не зацикливать publish при недоступном брокере: один быстрый таймаут и наружу.
 CELERY_TASK_PUBLISH_RETRY = False
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = False
 CELERY_BROKER_CONNECTION_RETRY = False
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
 CELERY_BROKER_TRANSPORT_OPTIONS = {'socket_connect_timeout': 2, 'socket_timeout': 2}
 
-# Для тестов: выполнять задачи синхронно
-import sys
-if 'test' in sys.argv:
+CELERY_BEAT_SCHEDULE = {
+    'send-appointment-reminders': {
+        'task': 'appointments.tasks.send_appointment_reminder',
+        'schedule': crontab(minute=0),
+    },
+    'auto-cancel-unconfirmed': {
+        'task': 'appointments.tasks.auto_cancel_unconfirmed',
+        'schedule': crontab(minute=30, hour='*/6'),
+    },
+    'send-daily-report': {
+        'task': 'appointments.tasks.send_daily_report',
+        'schedule': crontab(hour=23, minute=0),
+    },
+    'cleanup-old-appointments': {
+        'task': 'appointments.tasks.cleanup_old_appointments',
+        'schedule': crontab(hour=3, minute=0, day_of_week=1),
+    },
+}
+
+if TESTING:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'

@@ -1,26 +1,32 @@
 import logging
-from celery import shared_task
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils import timezone
 from datetime import timedelta
+from typing import Any
+
+from celery import shared_task
+from django.conf import settings
+from django.core.mail import send_mail
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
 
-def enqueue(task, *args, **kwargs):
+def enqueue(task: Any, *args: Any, **kwargs: Any) -> None:
     """Best-effort постановка задачи в очередь без блокировки HTTP-ответа.
 
-    Запись уже сохранена в БД, письмо — побочный эффект (см. инвариант CLAUDE.md).
-    При недоступном брокере publish может висеть несколько секунд на таймауте
-    подключения — выносим его в daemon-поток, чтобы ответ вернулся сразу.
-    В eager-режиме (тесты) выполняем синхронно: детерминированно и без
-    обращения к БД из постороннего потока.
+    Запись уже сохранена в БД, письмо — побочный эффект. При недоступном
+    брокере publish может висеть несколько секунд на таймауте подключения,
+    поэтому вызов выносится в daemon-поток. В eager-режиме (тесты) задача
+    выполняется синхронно.
+
+    Args:
+        task: Celery-задача.
+        *args: Позиционные аргументы задачи.
+        **kwargs: Именованные аргументы задачи.
     """
-    def _run():
+    def _run() -> None:
         try:
             task.delay(*args, **kwargs)
-        except Exception as exc:  # noqa: BLE001 — сбой брокера/сети глушим намеренно
+        except Exception as exc:
             logger.warning('Не удалось поставить задачу %s в очередь: %s', task.name, exc)
 
     if getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
@@ -31,8 +37,12 @@ def enqueue(task, *args, **kwargs):
 
 
 @shared_task
-def send_appointment_confirmation(appointment_id):
-    """Отправка подтверждения записи на приём."""
+def send_appointment_confirmation(appointment_id: int) -> None:
+    """Отправка письма-подтверждения записи на приём.
+
+    Args:
+        appointment_id: Идентификатор записи.
+    """
     from appointments.models import Appointment
 
     try:
@@ -61,8 +71,12 @@ def send_appointment_confirmation(appointment_id):
 
 
 @shared_task
-def send_appointment_reminder():
-    """Напоминание о записи за 24 часа."""
+def send_appointment_reminder() -> str:
+    """Периодическое напоминание клиентам о приёмах на завтра.
+
+    Returns:
+        Отчёт о количестве отправленных напоминаний.
+    """
     from appointments.models import Appointment
 
     tomorrow = timezone.now().date() + timedelta(days=1)
@@ -94,8 +108,12 @@ def send_appointment_reminder():
 
 
 @shared_task
-def auto_cancel_unconfirmed():
-    """Автоотмена неподтверждённых записей старше 48 часов."""
+def auto_cancel_unconfirmed() -> str:
+    """Периодическая автоотмена неподтверждённых записей старше 48 часов.
+
+    Returns:
+        Отчёт о количестве отменённых записей.
+    """
     from appointments.models import Appointment
 
     threshold = timezone.now() - timedelta(hours=48)
@@ -108,8 +126,12 @@ def auto_cancel_unconfirmed():
 
 
 @shared_task
-def send_daily_report():
-    """Ежедневный отчёт администраторам о записях."""
+def send_daily_report() -> str:
+    """Ежедневный отчёт администраторам о записях за день.
+
+    Returns:
+        Отчёт о результате отправки.
+    """
     from appointments.models import Appointment
     from users.models import User
 
@@ -144,8 +166,12 @@ def send_daily_report():
 
 
 @shared_task
-def cleanup_old_appointments():
-    """Очистка завершённых/отменённых записей старше 1 года."""
+def cleanup_old_appointments() -> str:
+    """Периодическая очистка завершённых и отменённых записей старше года.
+
+    Returns:
+        Отчёт о количестве удалённых записей.
+    """
     from appointments.models import Appointment
 
     threshold = timezone.now().date() - timedelta(days=365)

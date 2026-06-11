@@ -8,7 +8,6 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # API
     path('api/auth/', include('users.urls')),
     path('api/pets/', include('pets.urls')),
     path('api/doctors/', include('doctors.urls')),
@@ -16,7 +15,6 @@ urlpatterns = [
     path('api/', include('appointments.urls')),
     path('api/reviews/', include('reviews.urls')),
 
-    # Frontend
     path('', views.IndexView.as_view(), name='index'),
     path('doctors/', views.DoctorListView.as_view(), name='doctor-list'),
     path('doctors/<int:pk>/', views.DoctorDetailView.as_view(), name='doctor-detail'),
@@ -30,3 +28,6 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if getattr(settings, 'SILKY_ENABLED', False):
+    urlpatterns.append(path('silk/', include('silk.urls', namespace='silk')))
