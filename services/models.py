@@ -2,6 +2,8 @@ from django.db import models
 
 
 class Service(models.Model):
+    """Услуга клиники, привязанная к специализации."""
+
     name = models.CharField('Название', max_length=200)
     description = models.TextField('Описание', blank=True)
     price = models.DecimalField('Стоимость (руб.)', max_digits=10, decimal_places=2)
@@ -20,5 +22,5 @@ class Service(models.Model):
         verbose_name_plural = 'Услуги'
         ordering = ['specialty', 'name']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name} — {self.price} ₽'

@@ -98,7 +98,7 @@ async function prefillFromParams() {
             const svc = services.find(s => String(s.id) === String(serviceId));
             if (svc) state.service = svc;
         }
-    } catch (e) { /* префилл не критичен */ }
+    } catch (e) {}
 }
 
 function firstIncompleteStep() {
@@ -128,7 +128,6 @@ async function ensureServices() {
     services = servicesCache[key];
 }
 
-// ---- навигация ----
 async function setStep(n) {
     step = n;
     renderSteps();
@@ -161,7 +160,6 @@ function navHtml() {
     </div>`;
 }
 
-// ---- шаги ----
 function renderSpecialties() {
     if (!specialties.length) { $('stepBody').innerHTML = '<p class="wizard-empty">Отделы не найдены.</p>'; return; }
     $('stepBody').innerHTML = `
@@ -196,7 +194,7 @@ function renderDoctors() {
                         <div class="choice__title">${esc(d.full_name)}</div>
                         <div class="choice__desc">${esc(d.specialties.map(s => s.name).join(', '))}</div>
                         <div class="choice__meta">
-                            <span class="card__rating"><span class="star">★</span> ${Number(d.avg_rating || 0).toFixed(1)}</span>
+                            <span class="card__rating"><span class="star">★</span> ${Number(d.avg_rating || 0).toFixed(1)}${d.is_my_doctor ? ' <span class="badge-visited">Ваш врач</span>' : ''}</span>
                             <span class="choice__price">${money(d.consultation_price)}</span>
                         </div>
                     </button>`).join('')}

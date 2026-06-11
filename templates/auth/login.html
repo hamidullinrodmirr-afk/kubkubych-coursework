@@ -43,7 +43,6 @@
 
 {% block extra_js %}
 <script>
-// Показать ошибку OAuth если есть
 const urlParams = new URLSearchParams(location.search);
 if (urlParams.get('error')) {
     showAlert(document.getElementById('alerts'), 'Не удалось войти через внешний сервис. Попробуйте другой способ.');

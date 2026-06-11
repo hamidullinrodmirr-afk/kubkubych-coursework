@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     updateAuthUI();
 
-    // Burger menu
     const burger = document.querySelector('.header__burger');
     const nav = document.querySelector('.header__nav');
     if (burger && nav) {
@@ -17,7 +16,6 @@ const prefersReducedMotion = () =>
 
 let revealObserver = null;
 
-// Плавное появление элементов .reveal при попадании в зону видимости.
 function initMotion() {
     if (prefersReducedMotion() || !('IntersectionObserver' in window)) return;
     document.body.classList.add('anim');
@@ -32,13 +30,11 @@ function initMotion() {
     document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 }
 
-// Подписать на анимацию динамически добавленные .reveal (после fetch-рендера).
 function revealScan(scope) {
     if (!revealObserver) return;
     (scope || document).querySelectorAll('.reveal:not(.in)').forEach(el => revealObserver.observe(el));
 }
 
-// Анимированный счётчик чисел.
 function countUp(el) {
     const target = parseFloat(el.dataset.count);
     const dec = parseInt(el.dataset.dec || '0', 10);
@@ -92,7 +88,6 @@ async function updateAuthUI() {
     `;
 }
 
-// Экранирование данных API перед вставкой в innerHTML (защита от XSS)
 function esc(value) {
     if (value === null || value === undefined) return '';
     return String(value).replace(/[&<>"']/g, ch => ({
@@ -116,7 +111,7 @@ function formatDate(dateStr) {
 function showAlert(container, message, type = 'error') {
     const div = document.createElement('div');
     div.className = `alert alert--${type}`;
-    div.innerHTML = `<span>${message}</span><button class="alert__close" onclick="this.parentElement.remove()">&times;</button>`;
+    div.innerHTML = `<span>${esc(message)}</span><button class="alert__close" onclick="this.parentElement.remove()">&times;</button>`;
     container.prepend(div);
     setTimeout(() => { if (div.parentElement) div.remove(); }, 7000);
 }

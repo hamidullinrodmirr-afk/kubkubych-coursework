@@ -1,10 +1,3 @@
-/* ============================================================
-   PetCare — flat design system
-   Бренд: тил + navy. Шрифты: Unbounded (display) / Onest (UI).
-   Контракт классов сохранён (генерится в JS) — переименований нет.
-   ============================================================ */
-
-/* ========== RESET & BASE ========== */
 *, *::before, *::after {
     margin: 0;
     padding: 0;
@@ -12,7 +5,7 @@
 }
 
 :root {
-    /* --- brand --- */
+    
     --brand: #0E8C8B;
     --brand-deep: #0B6E6D;
     --brand-soft: #E3F1F0;
@@ -20,12 +13,12 @@
     --ink: #1B2A2E;
     --muted: #6B7B80;
 
-    /* --- surfaces --- */
+    
     --bg: #F7F8F5;
     --surface: #FFFFFF;
     --line: #E6EAE8;
 
-    /* --- accents (категории/бейджи, НЕ страницы) --- */
+    
     --accent-orange: #E79819;
     --accent-coral:  #FC5B3F;
     --accent-green:  #6EB17E;
@@ -35,22 +28,22 @@
     --green-soft:  #E2F0E6;
     --violet-soft: #EDE7FD;
 
-    /* --- spacing 8pt --- */
+    
     --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px;
     --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
 
-    /* --- radius --- */
+    
     --r-sm: 10px; --r: 16px; --r-lg: 24px; --r-pill: 999px;
 
-    /* --- shadow (flat: тинтованная, в основном на hover) --- */
+    
     --shadow-hover: 0 14px 34px -12px rgba(23, 62, 76, 0.22);
     --shadow-sm: 0 2px 12px rgba(23, 62, 76, 0.06);
 
-    /* --- fonts --- */
+    
     --font-display: 'Unbounded', system-ui, sans-serif;
     --font-ui: 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-    /* --- legacy-алиасы (старые inline-стили шаблонов/JS) --- */
+    
     --white: #FFFFFF;
     --dark: var(--ink);
     --gray: var(--muted);
@@ -63,7 +56,7 @@
     --radius-xl: 48px;
     --radius-pill: var(--r-pill);
     --shadow: var(--shadow-hover);
-    /* --orange / --red переопределены ниже значениями-акцентами */
+    
     --red: var(--accent-coral);
 }
 
@@ -97,7 +90,6 @@ main { flex: 1; }
     }
 }
 
-/* ========== TYPOGRAPHY ========== */
 h1, h2, h3, h4 {
     font-family: var(--font-display);
     color: var(--navy);
@@ -121,40 +113,32 @@ h2 {
 h3 { font-size: 1.35rem; font-weight: 700; }
 h4 { font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; }
 
-/* ========== ANIMATIONS ========== */
-/* активны только при body.anim (его ставит JS, если не reduced-motion) */
 @keyframes heroUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
 @keyframes heroFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 @keyframes cardIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
-/* hero: вход на загрузке */
 body.anim .hero__content > * { animation: heroUp 0.6s ease-out both; }
 body.anim .hero__content > *:nth-child(1) { animation-delay: 0.05s; }
 body.anim .hero__content > *:nth-child(2) { animation-delay: 0.15s; }
 body.anim .hero__content > *:nth-child(3) { animation-delay: 0.25s; }
 body.anim .hero__image { animation: heroFade 0.8s ease-out 0.1s both, float 6s ease-in-out 1.1s infinite; }
 
-/* scroll-reveal */
 body.anim .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease-out, transform 0.7s ease-out; }
 body.anim .reveal.in { opacity: 1; transform: none; }
 
-/* карточки мастера: появляются сразу при показе шага (они уже в зоне видимости) */
 body.anim .choice-grid .choice { animation: cardIn 0.45s ease-out both; }
 body.anim .choice-grid .choice:nth-child(2) { animation-delay: 0.06s; }
 body.anim .choice-grid .choice:nth-child(3) { animation-delay: 0.12s; }
 body.anim .choice-grid .choice:nth-child(4) { animation-delay: 0.18s; }
 body.anim .choice-grid .choice:nth-child(n+5) { animation-delay: 0.24s; }
 
-/* карточки сеток: появляются при доскролле (через .reveal), stagger по индексу --i */
 body.anim .cards-grid .reveal,
 body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 
-/* мягкий зум фото внутри карточки на hover */
 .card__image { transition: transform 0.4s ease-out; }
 .card:hover .card__image { transform: scale(1.05); }
 
-/* ========== HEADER ========== */
 .header {
     background: var(--surface);
     position: sticky;
@@ -253,7 +237,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
     transition: 0.3s;
 }
 
-/* ========== HERO ========== */
 .hero {
     padding: var(--s-8) 0;
     position: relative;
@@ -261,7 +244,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
     background: var(--brand-soft);
 }
 
-/* мягкий декоративный blob за иллюстрацией */
 .hero::before {
     content: '';
     position: absolute;
@@ -277,7 +259,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
     pointer-events: none;
 }
 
-/* per-page «настроение» — лёгкий тинт фона и blob (единый бренд сохранён) */
 .hero--orange { background: linear-gradient(180deg, var(--orange-soft), var(--bg)); }
 .hero--orange::before { background: var(--accent-orange); opacity: 0.14; }
 .hero--red    { background: linear-gradient(180deg, var(--coral-soft), var(--bg)); }
@@ -320,7 +301,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 
 .hero__image img { width: 100%; height: 100%; object-fit: cover; }
 
-/* ========== BUTTONS ========== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -364,7 +344,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .btn--sm { padding: 9px 18px; font-size: 0.85rem; }
 .btn--full { width: 100%; }
 
-/* ========== CHIPS ========== */
 .chip {
     display: inline-flex;
     align-items: center;
@@ -382,7 +361,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .chip--violet { background: var(--violet-soft); color: #6D45C9; }
 .card__body .chip { align-self: flex-start; }
 
-/* ========== ICONS ========== */
 .icon {
     width: 1.2em;
     height: 1.2em;
@@ -413,7 +391,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .svc-icon--violet { background: var(--accent-violet); }
 .svc-icon--brand  { background: var(--brand); }
 
-/* ========== SECTION ========== */
 .section { padding: var(--s-8) 0; }
 
 .section__header {
@@ -431,7 +408,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 
 .section-title { color: var(--navy); margin-bottom: var(--s-5); }
 
-/* ---- hero: вторичная строка доверия ---- */
 .hero__trust {
     display: flex;
     align-items: center;
@@ -444,14 +420,12 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .hero__trust b { color: var(--navy); font-family: var(--font-display); }
 .hero__cta { display: flex; gap: var(--s-3); flex-wrap: wrap; }
 
-/* ---- статистика (count-up) ---- */
 .stats { background: var(--navy); color: #fff; }
 .stats__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-5); text-align: center; }
 .stat-num { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1; }
 .stat-num .suf { color: var(--brand-soft); }
 .stat-label { opacity: 0.7; font-size: 0.9rem; margin-top: var(--s-2); }
 
-/* ---- преимущества ---- */
 .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-5); }
 .feature {
     background: var(--surface);
@@ -464,7 +438,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .feature h3 { text-transform: none; font-size: 1.1rem; margin: var(--s-4) 0 var(--s-2); }
 .feature p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
 
-/* ---- как записаться: 3 шага ---- */
 .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-6); counter-reset: how; }
 .how-step { position: relative; text-align: center; padding: 0 var(--s-3); }
 .how-step__num {
@@ -489,7 +462,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .how-step h3 { text-transform: none; font-size: 1.05rem; margin-bottom: var(--s-2); }
 .how-step p { color: var(--muted); font-size: 0.9rem; }
 
-/* ---- CTA-band ---- */
 .cta-band {
     background: linear-gradient(120deg, var(--brand), var(--brand-deep));
     border-radius: var(--r-lg);
@@ -520,7 +492,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
     .features-grid { grid-template-columns: 1fr; }
 }
 
-/* ========== CARDS ========== */
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -602,7 +573,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
     color: var(--brand);
 }
 
-/* ========== SPECIALTIES / SIDEBAR FILTER ========== */
 .layout-sidebar {
     display: grid;
     grid-template-columns: 260px 1fr;
@@ -655,7 +625,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
     font-weight: 600;
 }
 
-/* ========== SEARCH ========== */
 .search-bar {
     display: flex;
     align-items: center;
@@ -704,7 +673,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .search-btn:hover { background: var(--brand-deep); }
 .search-btn .icon { width: 18px; height: 18px; }
 
-/* ========== DOCTOR DETAIL ========== */
 .doctor-info {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -778,7 +746,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
     left: 0; top: 8px;
 }
 
-/* ========== REVIEWS ========== */
 .reviews-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -806,7 +773,6 @@ body.anim .reviews-grid .reveal { transition-delay: calc(var(--i, 0) * 70ms); }
 .review-card__text { color: var(--ink); font-size: 0.92rem; line-height: 1.6; }
 .review-card__date { color: var(--muted); font-size: 0.8rem; margin-top: auto; }
 
-/* ========== FORMS ========== */
 .form-section {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -867,10 +833,8 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 
 .form-error { color: var(--accent-coral); font-size: 0.8rem; margin-top: 4px; }
 
-/* ========== APPOINTMENT WIZARD ========== */
 .wizard { max-width: 900px; margin: 0 auto; }
 
-/* прогресс-шаги */
 .steps {
     display: flex;
     list-style: none;
@@ -905,7 +869,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
-/* линия-коннектор между кружками */
 .steps li::after {
     content: '';
     position: absolute;
@@ -932,7 +895,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     box-shadow: 0 0 0 4px var(--brand-soft);
 }
 
-/* панели шагов */
 .step-panel { animation: slideDown 0.25s ease; }
 .step-panel[hidden] { display: none; }
 
@@ -940,7 +902,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 .step-head h2 { text-transform: none; margin-bottom: 4px; }
 .step-head p { color: var(--muted); font-size: 0.92rem; }
 
-/* выбор карточками */
 .choice-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -995,7 +956,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 .choice__meta { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: var(--s-2); }
 .choice__price { font-family: var(--font-display); font-weight: 700; color: var(--brand); }
 
-/* слоты времени */
 .slot-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
@@ -1020,7 +980,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 .slot:hover { border-color: var(--brand); transform: translateY(-2px); }
 .slot--active { background: var(--brand); border-color: var(--brand); color: #fff; }
 
-/* сводка */
 .summary {
     background: var(--brand-soft);
     border-radius: var(--r-lg);
@@ -1039,7 +998,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 .summary__row dt { color: var(--muted); font-size: 0.9rem; }
 .summary__row dd { color: var(--navy); font-weight: 600; text-align: right; }
 
-/* навигация мастера */
 .wizard-nav {
     display: flex;
     justify-content: space-between;
@@ -1059,7 +1017,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     .choice-grid { grid-template-columns: 1fr 1fr; }
 }
 
-/* ========== AUTH ========== */
 .auth-page {
     display: flex;
     align-items: center;
@@ -1124,7 +1081,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 
 .auth-link a { color: var(--brand); font-weight: 600; }
 
-/* OAuth-кнопки */
 .btn--oauth {
     display: flex;
     align-items: center;
@@ -1142,7 +1098,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 .btn--google { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
 .btn--vk { background: #4680C2; color: #fff; }
 
-/* ========== PROFILE ========== */
 .profile-grid {
     display: grid;
     grid-template-columns: 300px 1fr;
@@ -1200,7 +1155,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     padding: var(--s-6);
 }
 
-/* ========== TABLE ========== */
 .table-wrap { overflow-x: auto; }
 
 .data-table { width: 100%; border-collapse: collapse; }
@@ -1235,7 +1189,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 .status-badge--completed   { background: #E0EDF2;            color: #245A6E; }
 .status-badge--cancelled   { background: var(--coral-soft);  color: #B23A28; }
 
-/* ========== ALERTS ========== */
 .alert {
     display: flex;
     justify-content: space-between;
@@ -1270,7 +1223,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     to   { transform: translateY(0); opacity: 1; }
 }
 
-/* ========== LOADING ========== */
 .loading {
     display: flex;
     flex-direction: column;
@@ -1292,7 +1244,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ========== PAGINATION ========== */
 .pagination {
     display: flex;
     justify-content: center;
@@ -1317,7 +1268,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 .pagination a:hover { background: var(--brand-soft); border-color: var(--brand-soft); color: var(--brand-deep); }
 .pagination .current { background: var(--brand); color: #fff; }
 
-/* ========== FOOTER ========== */
 .footer {
     background: var(--navy);
     color: #fff;
@@ -1384,7 +1334,6 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     opacity: 0.5;
 }
 
-/* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
     .layout-sidebar { grid-template-columns: 1fr; }
     .specialties-box { position: static; }
@@ -1427,4 +1376,15 @@ textarea.form-control { min-height: 110px; resize: vertical; }
 
     .footer__inner { grid-template-columns: 1fr; gap: var(--s-5); }
     .footer__brand { font-size: 1.4rem; }
+}
+
+.badge-visited {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    background: var(--brand-soft);
+    color: var(--brand-deep);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
 }

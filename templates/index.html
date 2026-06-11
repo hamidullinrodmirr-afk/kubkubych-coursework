@@ -251,6 +251,7 @@ async function loadDoctors(search = '') {
                     <div class="card__meta">
                         <span class="card__rating"><span class="star">★</span> ${Number(doc.avg_rating || 0).toFixed(1)}</span>
                         <span class="card__reviews">${pluralReviews(doc.reviews_count || 0)}</span>
+                        ${doc.is_my_doctor ? '<span class="badge-visited">Ваш врач</span>' : ''}
                     </div>
                     <div class="card__footer">
                         <span class="card__price">${Number(doc.consultation_price).toLocaleString('ru-RU')} ₽</span>
@@ -311,7 +312,7 @@ async function loadTestimonials() {
         `).join('');
         document.getElementById('reviewsSection').style.display = '';
         if (typeof revealScan === 'function') revealScan(document.getElementById('reviewsSection'));
-    } catch (e) { /* отзывы не критичны для лендинга */ }
+    } catch (e) {}
 }
 
 function searchDoctors() {

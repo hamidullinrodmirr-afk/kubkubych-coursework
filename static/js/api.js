@@ -24,7 +24,6 @@ const API = {
 
         let response = await fetch(this.baseURL + url, { ...options, headers });
 
-        // Если 401 — пробуем обновить токен
         if (response.status === 401 && localStorage.getItem('refresh_token')) {
             const refreshResp = await fetch(this.baseURL + '/auth/refresh/', {
                 method: 'POST',
