@@ -1,9 +1,13 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
 class Pet(models.Model):
+    """Питомец клиента с базовыми данными о здоровье."""
+
     class Species(models.TextChoices):
         CAT = 'cat', 'Кошка'
         DOG = 'dog', 'Собака'
@@ -29,7 +33,7 @@ class Pet(models.Model):
         'Вес (кг)',
         max_digits=6,
         decimal_places=2,
-        validators=[MinValueValidator(0.01), MaxValueValidator(200)],
+        validators=[MinValueValidator(Decimal('0.01')), MaxValueValidator(Decimal('200'))],
     )
     health_notes = models.TextField('Особенности здоровья', blank=True)
     photo = models.ImageField('Фото', upload_to='pets/', blank=True, null=True)
@@ -40,5 +44,5 @@ class Pet(models.Model):
         verbose_name_plural = 'Питомцы'
         ordering = ['-created_at']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.name} ({self.get_species_display()}) — {self.owner.full_name}'

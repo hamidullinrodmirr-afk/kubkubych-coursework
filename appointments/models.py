@@ -3,6 +3,12 @@ from django.db import models
 
 
 class Appointment(models.Model):
+    """Запись на приём: связывает клиента, врача, питомца и услугу.
+
+    Жизненный цикл статуса: pending → confirmed → in_progress → completed,
+    с переходом в cancelled из любого незавершённого состояния.
+    """
+
     class Status(models.TextChoices):
         PENDING = 'pending', 'Ожидание'
         CONFIRMED = 'confirmed', 'Подтверждён'
@@ -51,8 +57,15 @@ class Appointment(models.Model):
         verbose_name = 'Запись на приём'
         verbose_name_plural = 'Записи на приём'
         ordering = ['-date', '-time_slot']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('doctor', 'date', 'time_slot'),
+                condition=~models.Q(status='cancelled'),
+                name='uniq_active_slot_per_doctor',
+            ),
+        ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f'{self.client.full_name} → {self.doctor.user.full_name} '
             f'({self.date} {self.time_slot:%H:%M})'
@@ -60,6 +73,8 @@ class Appointment(models.Model):
 
 
 class MedicalRecord(models.Model):
+    """Медицинская карта: заполняется врачом по завершённому приёму."""
+
     appointment = models.OneToOneField(
         Appointment,
         on_delete=models.CASCADE,
@@ -88,5 +103,5 @@ class MedicalRecord(models.Model):
         verbose_name_plural = 'Медицинские карты'
         ordering = ['-created_at']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Карта: {self.pet.name} — {self.diagnosis[:50]}'

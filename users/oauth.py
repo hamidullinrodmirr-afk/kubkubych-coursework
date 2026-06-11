@@ -1,18 +1,26 @@
-import requests
 from urllib.parse import urlencode
 
+import requests
 from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
 
 
-def get_jwt_tokens(user):
-    """Генерация JWT-токенов для пользователя."""
+def get_jwt_tokens(user: User) -> dict[str, str]:
+    """Генерация пары JWT-токенов для пользователя.
+
+    Args:
+        user: Пользователь, для которого выпускаются токены.
+
+    Returns:
+        Словарь с ключами ``access`` и ``refresh``.
+    """
     refresh = RefreshToken.for_user(user)
     return {
         'access': str(refresh.access_token),
@@ -20,8 +28,18 @@ def get_jwt_tokens(user):
     }
 
 
-def get_or_create_oauth_user(email, first_name, last_name, provider):
-    """Найти или создать пользователя по email из OAuth."""
+def get_or_create_oauth_user(email: str, first_name: str, last_name: str, provider: str) -> User:
+    """Найти или создать пользователя по email из OAuth-провайдера.
+
+    Args:
+        email: Email из ответа провайдера.
+        first_name: Имя пользователя.
+        last_name: Фамилия пользователя.
+        provider: Название провайдера (``google`` / ``vk``).
+
+    Returns:
+        Существующий либо вновь созданный пользователь.
+    """
     try:
         user = User.objects.get(email=email)
     except User.DoesNotExist:
@@ -34,13 +52,13 @@ def get_or_create_oauth_user(email, first_name, last_name, provider):
     return user
 
 
-# ─── Google OAuth2 ──────────────────────────────────────────
-
 class GoogleLoginView(APIView):
     """Редирект на страницу авторизации Google."""
+
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, request: Request) -> HttpResponseRedirect:
+        """Формирует URL авторизации Google и перенаправляет на него."""
         params = {
             'client_id': settings.GOOGLE_CLIENT_ID,
             'redirect_uri': settings.GOOGLE_REDIRECT_URI,
@@ -54,17 +72,26 @@ class GoogleLoginView(APIView):
 
 
 class GoogleCallbackView(APIView):
-    """Обработка callback от Google."""
+    """Обработка callback от Google: обмен кода на токен и выдача JWT."""
+
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, request: Request) -> HttpResponseRedirect:
+        """Обменивает код авторизации на профиль Google и выдаёт JWT.
+
+        Args:
+            request: HTTP-запрос с параметрами ``code`` либо ``error``.
+
+        Returns:
+            Редирект на страницу входа (при ошибке) или на страницу
+            завершения входа с токенами.
+        """
         code = request.query_params.get('code')
         error = request.query_params.get('error')
 
         if error or not code:
-            return redirect(f'/login/?error=google_denied')
+            return redirect('/login/?error=google_denied')
 
-        # Обмен code на access_token
         token_resp = requests.post(
             'https://oauth2.googleapis.com/token',
             data={
@@ -82,7 +109,6 @@ class GoogleCallbackView(APIView):
 
         access_token = token_resp.json().get('access_token')
 
-        # Получение данных профиля
         user_resp = requests.get(
             'https://www.googleapis.com/oauth2/v2/userinfo',
             headers={'Authorization': f'Bearer {access_token}'},
@@ -110,13 +136,13 @@ class GoogleCallbackView(APIView):
         )
 
 
-# ─── VKontakte OAuth2 ───────────────────────────────────────
-
 class VKLoginView(APIView):
     """Редирект на страницу авторизации ВКонтакте."""
+
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, request: Request) -> HttpResponseRedirect:
+        """Формирует URL авторизации ВКонтакте и перенаправляет на него."""
         params = {
             'client_id': settings.VK_CLIENT_ID,
             'redirect_uri': settings.VK_REDIRECT_URI,
@@ -130,17 +156,26 @@ class VKLoginView(APIView):
 
 
 class VKCallbackView(APIView):
-    """Обработка callback от ВКонтакте."""
+    """Обработка callback от ВКонтакте: обмен кода на токен и выдача JWT."""
+
     permission_classes = [AllowAny]
 
-    def get(self, request):
+    def get(self, request: Request) -> HttpResponseRedirect:
+        """Обменивает код авторизации на профиль ВКонтакте и выдаёт JWT.
+
+        Args:
+            request: HTTP-запрос с параметрами ``code`` либо ``error``.
+
+        Returns:
+            Редирект на страницу входа (при ошибке) или на страницу
+            завершения входа с токенами.
+        """
         code = request.query_params.get('code')
         error = request.query_params.get('error')
 
         if error or not code:
             return redirect('/login/?error=vk_denied')
 
-        # Обмен code на access_token
         token_resp = requests.get(
             'https://oauth.vk.com/access_token',
             params={
@@ -163,7 +198,6 @@ class VKCallbackView(APIView):
         if not email:
             return redirect('/login/?error=vk_no_email')
 
-        # Получение данных профиля
         user_resp = requests.get(
             'https://api.vk.com/method/users.get',
             params={

@@ -4,6 +4,8 @@ from django.db import models
 
 
 class Review(models.Model):
+    """Отзыв клиента о враче, привязанный к конкретному завершённому приёму."""
+
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -36,5 +38,5 @@ class Review(models.Model):
         verbose_name_plural = 'Отзывы'
         ordering = ['-created_at']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.author.full_name} → {self.doctor.user.full_name}: {self.rating}★'

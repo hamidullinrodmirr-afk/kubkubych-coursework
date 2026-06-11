@@ -10,7 +10,6 @@ urlpatterns = [
     path('me/', views.ProfileView.as_view(), name='profile'),
     path('users/', views.UserListView.as_view(), name='user-list'),
 
-    # OAuth2
     path('oauth/google/', GoogleLoginView.as_view(), name='oauth-google'),
     path('oauth/google/callback/', GoogleCallbackView.as_view(), name='oauth-google-callback'),
     path('oauth/vk/', VKLoginView.as_view(), name='oauth-vk'),
