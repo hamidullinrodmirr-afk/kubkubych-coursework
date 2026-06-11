@@ -1,5 +1,6 @@
-from datetime import time, date, timedelta
+from datetime import time, timedelta
 from decimal import Decimal
+from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -13,13 +14,22 @@ from reviews.models import Review
 
 
 class Command(BaseCommand):
+    """Наполнение базы демонстрационными данными для разработки и защиты."""
+
     help = 'Заполнение базы тестовыми данными'
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
+        """Создаёт специализации, врачей, услуги, клиентов, записи и отзывы.
+
+        Команда идемпотентна: повторный запуск не дублирует данные.
+
+        Args:
+            *args: Позиционные аргументы команды.
+            **options: Именованные аргументы команды.
+        """
         self.stdout.write('Создание тестовых данных...')
 
-        # ─── Специализации ──────────────────────
-        specs = {}
+        specs: dict[str, Specialty] = {}
         spec_data = [
             ('Терапия', 'Общий осмотр, диагностика и лечение', 'stethoscope'),
             ('Хирургия', 'Оперативное лечение и восстановление', 'scalpel'),
@@ -35,7 +45,6 @@ class Command(BaseCommand):
             specs[name] = s
         self.stdout.write(f'  Специализации: {len(specs)}')
 
-        # ─── Ветеринары ─────────────────────────
         doctors_data = [
             {
                 'email': 'ivanov@petcare.ru', 'first_name': 'Алексей',
@@ -100,7 +109,7 @@ class Command(BaseCommand):
             },
         ]
 
-        doctors = []
+        doctors: list[Doctor] = []
         for d in doctors_data:
             user, created = User.objects.get_or_create(
                 email=d['email'],
@@ -124,7 +133,6 @@ class Command(BaseCommand):
                     'consultation_price': Decimal(d['consultation_price']),
                 },
             )
-            # Обновляем фото (URL), даже если врач уже существовал
             if d.get('photo') and not doctor.photo_url:
                 doctor.photo_url = d['photo']
                 doctor.save(update_fields=['photo_url'])
@@ -134,10 +142,9 @@ class Command(BaseCommand):
 
         self.stdout.write(f'  Ветеринары: {len(doctors)}')
 
-        # ─── Расписание ─────────────────────────
         for doctor in doctors:
             if not Schedule.objects.filter(doctor=doctor).exists():
-                for day in range(0, 5):  # Пн-Пт
+                for day in range(0, 5):
                     Schedule.objects.create(
                         doctor=doctor,
                         day_of_week=day,
@@ -147,7 +154,7 @@ class Command(BaseCommand):
                     )
                 Schedule.objects.create(
                     doctor=doctor,
-                    day_of_week=5,  # Суббота
+                    day_of_week=5,
                     start_time=time(10, 0),
                     end_time=time(15, 0),
                     slot_duration=30,
@@ -155,7 +162,6 @@ class Command(BaseCommand):
 
         self.stdout.write('  Расписание создано')
 
-        # ─── Услуги ─────────────────────────────
         services_data = [
             ('Первичный осмотр', 'Терапия', 30, '1500.00',
              'Полный осмотр животного с назначением лечения'),
@@ -187,7 +193,7 @@ class Command(BaseCommand):
              'Удаление молочных или постоянных зубов'),
         ]
 
-        services = []
+        services: list[Service] = []
         for name, spec_name, duration, price, desc in services_data:
             svc, _ = Service.objects.get_or_create(
                 name=name,
@@ -202,8 +208,6 @@ class Command(BaseCommand):
 
         self.stdout.write(f'  Услуги: {len(services)}')
 
-        # ─── Клиенты и питомцы ─────────────────
-        # Клиент 1 — Мария Смирнова
         client1, created = User.objects.get_or_create(
             email='client@example.com',
             defaults={
@@ -217,7 +221,7 @@ class Command(BaseCommand):
             client1.set_password('client123')
             client1.save()
 
-        pets_client1 = []
+        pets_client1: list[Pet] = []
         pets_data_1 = [
             ('Барсик', 'cat', 'Британская короткошёрстная', 36, '5.20', 'Аллергия на курицу'),
             ('Рекс', 'dog', 'Немецкая овчарка', 48, '32.00', 'Прививки актуальны до 2027 г.'),
@@ -236,7 +240,6 @@ class Command(BaseCommand):
             )
             pets_client1.append(pet)
 
-        # Клиент 2 — Игорь Петров
         client2, created = User.objects.get_or_create(
             email='petrov@mail.ru',
             defaults={
@@ -250,7 +253,7 @@ class Command(BaseCommand):
             client2.set_password('client123')
             client2.save()
 
-        pets_client2 = []
+        pets_client2: list[Pet] = []
         pets_data_2 = [
             ('Мурка', 'cat', 'Шотландская вислоухая', 24, '4.10',
              'Склонность к мочекаменной болезни'),
@@ -273,17 +276,14 @@ class Command(BaseCommand):
         all_pets = pets_client1 + pets_client2
         self.stdout.write(f'  Питомцы: {len(all_pets)}')
 
-        # ─── Записи на приём ────────────────────
         today = timezone.now().date()
-        appointments_created = 0
 
         if not Appointment.objects.filter(client=client1).exists():
-            # Завершённые записи (прошлые даты) — клиент 1
             appt1 = Appointment.objects.create(
                 client=client1,
-                doctor=doctors[0],  # Иванов — терапия
-                pet=pets_client1[0],  # Барсик
-                service=services[0],  # Первичный осмотр
+                doctor=doctors[0],
+                pet=pets_client1[0],
+                service=services[0],
                 date=today - timedelta(days=14),
                 time_slot=time(10, 0),
                 status='completed',
@@ -291,9 +291,9 @@ class Command(BaseCommand):
             )
             appt2 = Appointment.objects.create(
                 client=client1,
-                doctor=doctors[1],  # Петрова — хирургия
-                pet=pets_client1[0],  # Барсик
-                service=services[5],  # Кастрация кота
+                doctor=doctors[1],
+                pet=pets_client1[0],
+                service=services[5],
                 date=today - timedelta(days=7),
                 time_slot=time(9, 0),
                 status='completed',
@@ -301,9 +301,9 @@ class Command(BaseCommand):
             )
             appt3 = Appointment.objects.create(
                 client=client1,
-                doctor=doctors[3],  # Кузнецова — дерматология
-                pet=pets_client1[0],  # Барсик
-                service=services[10],  # Лечение дерматита
+                doctor=doctors[3],
+                pet=pets_client1[0],
+                service=services[10],
                 date=today - timedelta(days=5),
                 time_slot=time(11, 30),
                 status='completed',
@@ -311,54 +311,48 @@ class Command(BaseCommand):
             )
             appt4 = Appointment.objects.create(
                 client=client1,
-                doctor=doctors[4],  # Волков — стоматология
-                pet=pets_client1[1],  # Рекс
-                service=services[12],  # Чистка зубов
+                doctor=doctors[4],
+                pet=pets_client1[1],
+                service=services[12],
                 date=today - timedelta(days=3),
                 time_slot=time(15, 0),
                 status='completed',
                 comment='Плановая чистка зубов, зубной камень.',
             )
 
-            # Подтверждённая запись (завтра) — клиент 1
-            appt5 = Appointment.objects.create(
+            Appointment.objects.create(
                 client=client1,
-                doctor=doctors[2],  # Сидоров — офтальмология
-                pet=pets_client1[0],  # Барсик
-                service=services[8],  # Осмотр глазного дна
+                doctor=doctors[2],
+                pet=pets_client1[0],
+                service=services[8],
                 date=today + timedelta(days=1),
                 time_slot=time(14, 0),
                 status='confirmed',
                 comment='Слезотечение из правого глаза.',
             )
 
-            # Ожидающая запись (через 5 дней) — клиент 1
-            appt6 = Appointment.objects.create(
+            Appointment.objects.create(
                 client=client1,
-                doctor=doctors[0],  # Иванов — терапия
-                pet=pets_client1[1],  # Рекс
-                service=services[2],  # Вакцинация
+                doctor=doctors[0],
+                pet=pets_client1[1],
+                service=services[2],
                 date=today + timedelta(days=5),
                 time_slot=time(10, 30),
                 status='pending',
                 comment='Плановая ежегодная вакцинация.',
             )
 
-            # Отменённая запись — клиент 1
-            appt7 = Appointment.objects.create(
+            Appointment.objects.create(
                 client=client1,
-                doctor=doctors[5],  # Морозова — кардиология
-                pet=pets_client1[1],  # Рекс
-                service=services[4],  # ЭКГ
+                doctor=doctors[5],
+                pet=pets_client1[1],
+                service=services[4],
                 date=today - timedelta(days=2),
                 time_slot=time(12, 0),
                 status='cancelled',
                 cancel_reason='Клиент заболел, перенос на другую дату.',
             )
 
-            appointments_created += 7
-
-            # ─── Отзывы от клиента 1 ──────────────
             Review.objects.get_or_create(
                 appointment=appt1,
                 defaults={
@@ -409,12 +403,11 @@ class Command(BaseCommand):
             )
 
         if not Appointment.objects.filter(client=client2).exists():
-            # Завершённые записи — клиент 2
             appt8 = Appointment.objects.create(
                 client=client2,
-                doctor=doctors[0],  # Иванов — терапия
-                pet=pets_client2[0],  # Мурка
-                service=services[0],  # Первичный осмотр
+                doctor=doctors[0],
+                pet=pets_client2[0],
+                service=services[0],
                 date=today - timedelta(days=10),
                 time_slot=time(11, 0),
                 status='completed',
@@ -422,9 +415,9 @@ class Command(BaseCommand):
             )
             appt9 = Appointment.objects.create(
                 client=client2,
-                doctor=doctors[5],  # Морозова — кардиология
-                pet=pets_client2[1],  # Бобик
-                service=services[4],  # ЭКГ
+                doctor=doctors[5],
+                pet=pets_client2[1],
+                service=services[4],
                 date=today - timedelta(days=6),
                 time_slot=time(13, 0),
                 status='completed',
@@ -432,54 +425,48 @@ class Command(BaseCommand):
             )
             appt10 = Appointment.objects.create(
                 client=client2,
-                doctor=doctors[2],  # Сидоров — офтальмология
-                pet=pets_client2[0],  # Мурка
-                service=services[9],  # Лечение конъюнктивита
+                doctor=doctors[2],
+                pet=pets_client2[0],
+                service=services[9],
                 date=today - timedelta(days=4),
                 time_slot=time(16, 0),
                 status='completed',
                 comment='Покраснение и выделения из левого глаза.',
             )
 
-            # Подтверждённая запись (через 2 дня) — клиент 2
             Appointment.objects.create(
                 client=client2,
-                doctor=doctors[1],  # Петрова — хирургия
-                pet=pets_client2[1],  # Бобик
-                service=services[7],  # Удаление новообразований
+                doctor=doctors[1],
+                pet=pets_client2[1],
+                service=services[7],
                 date=today + timedelta(days=2),
                 time_slot=time(9, 30),
                 status='confirmed',
                 comment='Небольшое образование на правом боку, рекомендовано удаление.',
             )
 
-            # Ожидающая запись (через 7 дней) — клиент 2
             Appointment.objects.create(
                 client=client2,
-                doctor=doctors[3],  # Кузнецова — дерматология
-                pet=pets_client2[0],  # Мурка
-                service=services[11],  # Трихоскопия
+                doctor=doctors[3],
+                pet=pets_client2[0],
+                service=services[11],
                 date=today + timedelta(days=7),
                 time_slot=time(10, 0),
                 status='pending',
                 comment='Выпадение шерсти на спине.',
             )
 
-            # Подтверждённая запись на послезавтра — клиент 2
             Appointment.objects.create(
                 client=client2,
-                doctor=doctors[0],  # Иванов — терапия
-                pet=pets_client2[0],  # Мурка
-                service=services[1],  # Повторный осмотр
+                doctor=doctors[0],
+                pet=pets_client2[0],
+                service=services[1],
                 date=today + timedelta(days=4),
                 time_slot=time(14, 30),
                 status='confirmed',
                 comment='Контрольный осмотр после лечения.',
             )
 
-            appointments_created += 6
-
-            # ─── Отзывы от клиента 2 ──────────────
             Review.objects.get_or_create(
                 appointment=appt8,
                 defaults={
@@ -525,7 +512,6 @@ class Command(BaseCommand):
         self.stdout.write(f'  Записи на приём: {total_appointments}')
         self.stdout.write(f'  Отзывы: {total_reviews}')
 
-        # ─── Админ ──────────────────────────────
         admin, created = User.objects.get_or_create(
             email='admin@petcare.ru',
             defaults={
@@ -542,8 +528,8 @@ class Command(BaseCommand):
             self.stdout.write('  Администратор создан')
 
         self.stdout.write(self.style.SUCCESS('\nГотово! Тестовые данные загружены.'))
-        self.stdout.write(f'\nДанные для входа:')
-        self.stdout.write(f'  Клиент 1: client@example.com / client123')
-        self.stdout.write(f'  Клиент 2: petrov@mail.ru / client123')
-        self.stdout.write(f'  Врач:     ivanov@petcare.ru / doctor123')
-        self.stdout.write(f'  Админ:    admin@petcare.ru / admin123')
+        self.stdout.write('\nДанные для входа:')
+        self.stdout.write('  Клиент 1: client@example.com / client123')
+        self.stdout.write('  Клиент 2: petrov@mail.ru / client123')
+        self.stdout.write('  Врач:     ivanov@petcare.ru / doctor123')
+        self.stdout.write('  Админ:    admin@petcare.ru / admin123')

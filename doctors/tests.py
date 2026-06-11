@@ -18,12 +18,10 @@ class DoctorTestMixin:
     def create_test_data(self):
         self.client_api = APIClient()
 
-        # Специализации
         self.cardiology = Specialty.objects.create(name='Кардиология')
         self.dermatology = Specialty.objects.create(name='Дерматология')
         self.neurology = Specialty.objects.create(name='Неврология')
 
-        # Врач-кардиолог
         self.vet_user = User.objects.create_user(
             email='vet@example.com', password='pass123',
             first_name='Алексей', last_name='Иванов',
@@ -37,7 +35,6 @@ class DoctorTestMixin:
         )
         self.doctor.specialties.add(self.cardiology)
 
-        # Расписание: Пн-Пт 9:00-17:00
         for day in range(5):
             Schedule.objects.create(
                 doctor=self.doctor,
@@ -47,25 +44,21 @@ class DoctorTestMixin:
                 slot_duration=30,
             )
 
-        # Клиент
         self.patient_user = User.objects.create_user(
             email='patient@example.com', password='pass123',
             first_name='Мария', last_name='Петрова',
         )
 
-        # Питомец
         self.pet = Pet.objects.create(
             owner=self.patient_user, name='Мурка',
             species='cat', breed='Персидская', age=48, weight=4.5,
         )
 
-        # Услуга кардиолога
         self.service_cardio = Service.objects.create(
             name='ЭКГ для животных', price=2500,
             duration_minutes=30, specialty=self.cardiology,
         )
 
-        # Услуга дерматолога
         self.service_derma = Service.objects.create(
             name='Осмотр кожи', price=1500,
             duration_minutes=30, specialty=self.dermatology,
@@ -78,7 +71,6 @@ class DoctorFilterTest(DoctorTestMixin, TestCase):
     def setUp(self):
         self.create_test_data()
 
-        # Второй врач — дерматолог
         vet2 = User.objects.create_user(
             email='vet2@example.com', password='pass123',
             first_name='Елена', last_name='Сидорова',
@@ -111,7 +103,6 @@ class DoctorRatingAnnotationTest(DoctorTestMixin, TestCase):
         self.create_test_data()
         self.client_api.force_authenticate(user=self.patient_user)
 
-        # Создаём завершённые приёмы и отзывы
         next_monday = date.today() + timedelta(days=(7 - date.today().weekday()))
         for i, rating in enumerate([5, 4, 3]):
             appt = Appointment.objects.create(
@@ -144,7 +135,6 @@ class DoctorAvailableSlotsTest(DoctorTestMixin, TestCase):
         self.create_test_data()
 
     def test_available_slots(self):
-        # Ближайший понедельник
         today = date.today()
         next_monday = today + timedelta(days=(7 - today.weekday()))
 
@@ -156,7 +146,6 @@ class DoctorAvailableSlotsTest(DoctorTestMixin, TestCase):
         slots = response.data['slots']
         self.assertIn('09:00', slots)
         self.assertIn('16:30', slots)
-        # 9:00-17:00 с шагом 30 мин = 16 слотов
         self.assertEqual(len(slots), 16)
 
     def test_slots_exclude_booked(self):
@@ -183,3 +172,96 @@ class DoctorAvailableSlotsTest(DoctorTestMixin, TestCase):
             f'/api/doctors/{self.doctor.id}/available-slots/',
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class DoctorFilterSetTest(DoctorTestMixin, TestCase):
+    """Тесты 23-25: Фильтрация врачей через DoctorFilter (django-filter)"""
+
+    def setUp(self):
+        self.create_test_data()
+
+        vet2 = User.objects.create_user(
+            email='vet2@example.com', password='pass123',
+            first_name='Елена', last_name='Сидорова',
+            role='veterinarian',
+        )
+        self.doctor2 = Doctor.objects.create(
+            user=vet2, experience_years=3,
+            consultation_price=2000, is_available=True,
+        )
+        self.doctor2.specialties.add(self.dermatology)
+
+    def test_filter_by_min_price(self):
+        response = self.client_api.get('/api/doctors/', {'min_price': 2500})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        names = [d['full_name'] for d in response.data['results']]
+        self.assertEqual(names, ['Иванов Алексей'])
+
+    def test_filter_by_min_experience(self):
+        response = self.client_api.get('/api/doctors/', {'min_experience': 4})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        names = [d['full_name'] for d in response.data['results']]
+        self.assertEqual(names, ['Иванов Алексей'])
+
+    def test_invalid_min_rating_returns_400(self):
+        response = self.client_api.get('/api/doctors/', {'min_rating': 'abc'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class DoctorVisitedContextTest(DoctorTestMixin, TestCase):
+    """Тесты 26-27: Флаг is_my_doctor через контекст сериализатора"""
+
+    def setUp(self):
+        self.create_test_data()
+        next_monday = date.today() + timedelta(days=(7 - date.today().weekday()))
+        Appointment.objects.create(
+            client=self.patient_user, doctor=self.doctor,
+            pet=self.pet, service=self.service_cardio,
+            date=next_monday - timedelta(days=14), time_slot='10:00',
+            status='completed',
+        )
+
+    def test_visited_doctor_flagged_for_client(self):
+        self.client_api.force_authenticate(user=self.patient_user)
+        response = self.client_api.get('/api/doctors/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['results'][0]['is_my_doctor'])
+
+    def test_flag_false_for_anonymous(self):
+        response = self.client_api.get('/api/doctors/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['results'][0]['is_my_doctor'])
+
+
+class ScheduleValidationTest(DoctorTestMixin, TestCase):
+    """Тесты 28-30: Валидация расписания врача"""
+
+    def setUp(self):
+        self.create_test_data()
+
+    def test_start_after_end_rejected(self):
+        from django.core.exceptions import ValidationError
+        schedule = Schedule(
+            doctor=self.doctor, day_of_week=6,
+            start_time='15:00', end_time='10:00', slot_duration=30,
+        )
+        with self.assertRaises(ValidationError):
+            schedule.full_clean()
+
+    def test_overlapping_interval_rejected(self):
+        from django.core.exceptions import ValidationError
+        schedule = Schedule(
+            doctor=self.doctor, day_of_week=0,
+            start_time='10:00', end_time='12:00', slot_duration=30,
+        )
+        with self.assertRaises(ValidationError):
+            schedule.full_clean()
+
+    def test_slot_duration_out_of_bounds_rejected(self):
+        from django.core.exceptions import ValidationError
+        schedule = Schedule(
+            doctor=self.doctor, day_of_week=6,
+            start_time='10:00', end_time='12:00', slot_duration=10,
+        )
+        with self.assertRaises(ValidationError):
+            schedule.full_clean()

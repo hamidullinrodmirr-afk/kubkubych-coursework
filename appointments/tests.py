@@ -54,7 +54,6 @@ class AppointmentTestMixin:
             specialty=self.dermatology,
         )
 
-        # Ближайший понедельник
         today = date.today()
         self.next_monday = today + timedelta(days=(7 - today.weekday()))
 
@@ -141,7 +140,7 @@ class DoctorServiceMismatchTest(AppointmentTestMixin, TestCase):
         data = {
             'doctor': self.doctor.id,
             'pet': self.pet.id,
-            'service': self.service_derma.id,  # дерматология, а врач — кардиолог
+            'service': self.service_derma.id,
             'date': self.next_monday.isoformat(),
             'time_slot': '10:00',
         }
@@ -215,4 +214,185 @@ class AppointmentCancelTest(AppointmentTestMixin, TestCase):
         response = self.client_api.post(
             f'/api/appointments/{self.appointment.id}/cancel/',
         )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class AppointmentStatusPermissionTest(AppointmentTestMixin, TestCase):
+    """Тесты 13-16: Подтверждение и завершение приёма доступны только врачу/админу"""
+
+    def setUp(self):
+        self.create_test_data()
+        self.appointment = Appointment.objects.create(
+            client=self.patient, doctor=self.doctor,
+            pet=self.pet, service=self.service,
+            date=self.next_monday, time_slot=time(10, 0),
+            status='pending',
+        )
+
+    def test_client_cannot_confirm(self):
+        self.client_api.force_authenticate(user=self.patient)
+        response = self.client_api.post(
+            f'/api/appointments/{self.appointment.id}/confirm/',
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, 'pending')
+
+    def test_vet_confirms_own_appointment(self):
+        self.client_api.force_authenticate(user=self.vet_user)
+        response = self.client_api.post(
+            f'/api/appointments/{self.appointment.id}/confirm/',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, 'confirmed')
+
+    def test_client_cannot_complete(self):
+        self.appointment.status = 'confirmed'
+        self.appointment.save()
+        self.client_api.force_authenticate(user=self.patient)
+        response = self.client_api.post(
+            f'/api/appointments/{self.appointment.id}/complete/',
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_vet_completes_confirmed_appointment(self):
+        self.appointment.status = 'confirmed'
+        self.appointment.save()
+        self.client_api.force_authenticate(user=self.vet_user)
+        response = self.client_api.post(
+            f'/api/appointments/{self.appointment.id}/complete/',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, 'completed')
+
+
+class SlotGridValidationTest(AppointmentTestMixin, TestCase):
+    """Тест 17: Время записи должно совпадать с сеткой слотов врача"""
+
+    def setUp(self):
+        self.create_test_data()
+        self.client_api.force_authenticate(user=self.patient)
+
+    def test_misaligned_slot_rejected(self):
+        data = {
+            'doctor': self.doctor.id,
+            'pet': self.pet.id,
+            'service': self.service.id,
+            'date': self.next_monday.isoformat(),
+            'time_slot': '10:07',
+        }
+        response = self.client_api.post('/api/appointments/', data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('time_slot', str(response.data))
+
+    def test_aligned_slot_accepted(self):
+        data = {
+            'doctor': self.doctor.id,
+            'pet': self.pet.id,
+            'service': self.service.id,
+            'date': self.next_monday.isoformat(),
+            'time_slot': '10:30',
+        }
+        response = self.client_api.post('/api/appointments/', data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+
+class DoubleBookingConstraintTest(AppointmentTestMixin, TestCase):
+    """Тест 18: Уникальное ограничение БД на активный слот врача"""
+
+    def setUp(self):
+        self.create_test_data()
+
+    def test_duplicate_active_slot_raises(self):
+        from django.db import IntegrityError, transaction
+        Appointment.objects.create(
+            client=self.patient, doctor=self.doctor,
+            pet=self.pet, service=self.service,
+            date=self.next_monday, time_slot=time(10, 0),
+            status='confirmed',
+        )
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Appointment.objects.create(
+                    client=self.patient, doctor=self.doctor,
+                    pet=self.pet, service=self.service,
+                    date=self.next_monday, time_slot=time(10, 0),
+                    status='pending',
+                )
+
+    def test_cancelled_slot_can_be_rebooked(self):
+        Appointment.objects.create(
+            client=self.patient, doctor=self.doctor,
+            pet=self.pet, service=self.service,
+            date=self.next_monday, time_slot=time(10, 0),
+            status='cancelled',
+        )
+        appointment = Appointment.objects.create(
+            client=self.patient, doctor=self.doctor,
+            pet=self.pet, service=self.service,
+            date=self.next_monday, time_slot=time(10, 0),
+            status='pending',
+        )
+        self.assertIsNotNone(appointment.id)
+
+
+class MedicalRecordPermissionTest(AppointmentTestMixin, TestCase):
+    """Тесты 19-22: Медкарту заполняет только врач завершённого приёма"""
+
+    def setUp(self):
+        self.create_test_data()
+        self.completed_appt = Appointment.objects.create(
+            client=self.patient, doctor=self.doctor,
+            pet=self.pet, service=self.service,
+            date=self.next_monday - timedelta(days=7), time_slot=time(10, 0),
+            status='completed',
+        )
+        self.record_data = {
+            'appointment': None,
+            'diagnosis': 'Лёгкая аритмия',
+            'treatment': 'Курс препаратов на 14 дней',
+            'recommendations': 'Контрольный осмотр через месяц',
+        }
+
+    def test_client_cannot_create_record(self):
+        self.client_api.force_authenticate(user=self.patient)
+        self.record_data['appointment'] = self.completed_appt.id
+        response = self.client_api.post('/api/medical-records/', self.record_data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_vet_creates_record_for_own_completed(self):
+        self.client_api.force_authenticate(user=self.vet_user)
+        self.record_data['appointment'] = self.completed_appt.id
+        response = self.client_api.post('/api/medical-records/', self.record_data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['pet'], self.pet.id)
+        self.assertEqual(response.data['doctor'], self.doctor.id)
+
+    def test_vet_cannot_create_record_for_pending(self):
+        pending = Appointment.objects.create(
+            client=self.patient, doctor=self.doctor,
+            pet=self.pet, service=self.service,
+            date=self.next_monday, time_slot=time(11, 0),
+            status='pending',
+        )
+        self.client_api.force_authenticate(user=self.vet_user)
+        self.record_data['appointment'] = pending.id
+        response = self.client_api.post('/api/medical-records/', self.record_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_vet_cannot_create_record_for_foreign_appointment(self):
+        other_vet = User.objects.create_user(
+            email='vet2@example.com', password='pass123',
+            first_name='Елена', last_name='Сидорова',
+            role='veterinarian',
+        )
+        Doctor.objects.create(
+            user=other_vet, experience_years=3,
+            consultation_price=2000, is_available=True,
+        )
+        self.client_api.force_authenticate(user=other_vet)
+        self.record_data['appointment'] = self.completed_appt.id
+        response = self.client_api.post('/api/medical-records/', self.record_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

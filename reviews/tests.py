@@ -46,7 +46,6 @@ class ReviewWithoutCompletedAppointmentTest(TestCase):
         today = date.today()
         next_monday = today + timedelta(days=(7 - today.weekday()))
 
-        # Приём в статусе "ожидание" (не завершён)
         self.pending_appt = Appointment.objects.create(
             client=self.patient, doctor=self.doctor,
             pet=self.pet, service=self.service,
@@ -101,3 +100,80 @@ class ReviewWithoutCompletedAppointmentTest(TestCase):
         }
         response = self.client_api.post('/api/reviews/', data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ReviewUpdateTest(TestCase):
+    """Тесты 31-33: Редактирование отзыва автором и защита от чужих правок"""
+
+    def setUp(self):
+        self.client_api = APIClient()
+
+        cardiology = Specialty.objects.create(name='Кардиология')
+        vet_user = User.objects.create_user(
+            email='vet@example.com', password='pass123',
+            first_name='Алексей', last_name='Иванов',
+            role='veterinarian',
+        )
+        self.doctor = Doctor.objects.create(
+            user=vet_user, experience_years=5,
+            consultation_price=3000, is_available=True,
+        )
+        self.doctor.specialties.add(cardiology)
+
+        self.patient = User.objects.create_user(
+            email='patient@example.com', password='pass123',
+            first_name='Мария', last_name='Петрова',
+        )
+        pet = Pet.objects.create(
+            owner=self.patient, name='Мурка',
+            species='cat', breed='Персидская', age=48, weight=4.5,
+        )
+        service = Service.objects.create(
+            name='ЭКГ', price=2500, duration_minutes=30,
+            specialty=cardiology,
+        )
+        appointment = Appointment.objects.create(
+            client=self.patient, doctor=self.doctor,
+            pet=pet, service=service,
+            date=date.today() - timedelta(days=7), time_slot=time(10, 0),
+            status='completed',
+        )
+        self.review = Review.objects.create(
+            author=self.patient, doctor=self.doctor,
+            appointment=appointment,
+            rating=5, text='Первоначальный текст отзыва о враче',
+            is_approved=True,
+        )
+
+    def test_author_partial_update_resets_moderation(self):
+        self.client_api.force_authenticate(user=self.patient)
+        response = self.client_api.patch(
+            f'/api/reviews/{self.review.id}/',
+            {'text': 'Обновлённый текст отзыва о враче'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.text, 'Обновлённый текст отзыва о враче')
+        self.assertFalse(self.review.is_approved)
+
+    def test_foreign_user_cannot_update(self):
+        stranger = User.objects.create_user(
+            email='stranger@example.com', password='pass123',
+            first_name='Посторонний', last_name='Пользователь',
+        )
+        self.client_api.force_authenticate(user=stranger)
+        response = self.client_api.patch(
+            f'/api/reviews/{self.review.id}/',
+            {'text': 'Попытка чужой правки отзыва'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_partial_update_without_relations_no_error(self):
+        self.client_api.force_authenticate(user=self.patient)
+        response = self.client_api.patch(
+            f'/api/reviews/{self.review.id}/',
+            {'rating': 4},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.rating, 4)

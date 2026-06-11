@@ -38,6 +38,19 @@ class RegistrationTest(TestCase):
         response = self.client.post('/api/auth/register/', data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_register_weak_password_rejected(self):
+        data = {
+            'email': 'weak@example.com',
+            'first_name': 'Иван',
+            'last_name': 'Петров',
+            'password': '12345678',
+            'password_confirm': '12345678',
+        }
+        response = self.client.post('/api/auth/register/', data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)
+        self.assertFalse(User.objects.filter(email='weak@example.com').exists())
+
 
 class AuthenticationTest(TestCase):
     """Тест 2: Авторизация и получение JWT токена"""
