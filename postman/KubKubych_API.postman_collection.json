@@ -1,0 +1,334 @@
+{
+  "info": {
+    "name": "KubKubych API",
+    "description": "Коллекция запросов к API интернет-магазина конструкторов LEGO «КубКубыч». Сначала выполните Auth → Login: токен сохранится в переменную access_token автоматически.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "category_id", "value": "1" },
+    { "key": "product_id", "value": "1" },
+    { "key": "cart_item_id", "value": "1" },
+    { "key": "order_id", "value": "1" },
+    { "key": "review_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/register/", "host": ["{{base_url}}"], "path": ["api", "auth", "register", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"new@kubkubych.ru\",\n  \"first_name\": \"Новый\",\n  \"last_name\": \"Покупатель\",\n  \"phone\": \"+79991234567\",\n  \"password\": \"strongpass123\",\n  \"password_confirm\": \"strongpass123\"\n}" }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('access_token', data.access);",
+                  "  pm.collectionVariables.set('refresh_token', data.refresh);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/login/", "host": ["{{base_url}}"], "path": ["api", "auth", "login", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@kubkubych.ru\",\n  \"password\": \"admin123\"\n}" }
+          }
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/auth/refresh/", "host": ["{{base_url}}"], "path": ["api", "auth", "refresh", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}" }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/auth/me/", "host": ["{{base_url}}"], "path": ["api", "auth", "me", ""] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "List categories",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/categories/", "host": ["{{base_url}}"], "path": ["api", "categories", ""] }
+          }
+        },
+        {
+          "name": "Create category (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/categories/", "host": ["{{base_url}}"], "path": ["api", "categories", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"LEGO Speed Champions\",\n  \"slug\": \"speed-champions\",\n  \"max_discount_percent\": 40\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/products/?ordering=-sold_units", "host": ["{{base_url}}"], "path": ["api", "products", ""], "query": [{ "key": "ordering", "value": "-sold_units" }] }
+          }
+        },
+        {
+          "name": "Product detail",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", ""] }
+          }
+        },
+        {
+          "name": "Filter by category",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/products/?category={{category_id}}", "host": ["{{base_url}}"], "path": ["api", "products", ""], "query": [{ "key": "category", "value": "{{category_id}}" }] }
+          }
+        },
+        {
+          "name": "Filter by price",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/products/?min_price=1000&max_price=15000", "host": ["{{base_url}}"], "path": ["api", "products", ""], "query": [{ "key": "min_price", "value": "1000" }, { "key": "max_price", "value": "15000" }] }
+          }
+        },
+        {
+          "name": "Filter in stock",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/products/?in_stock=true", "host": ["{{base_url}}"], "path": ["api", "products", ""], "query": [{ "key": "in_stock", "value": "true" }] }
+          }
+        },
+        {
+          "name": "Create product (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/products/", "host": ["{{base_url}}"], "path": ["api", "products", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"category\": {{category_id}},\n  \"name\": \"LEGO City Пожарная часть\",\n  \"article\": \"60414\",\n  \"description\": \"Набор с пожарной техникой и фигурками.\",\n  \"age_from\": 6,\n  \"age_to\": 12,\n  \"pieces\": 843,\n  \"price\": \"8999\",\n  \"discount_percent\": 10,\n  \"stock\": 7\n}" }
+          }
+        },
+        {
+          "name": "Update product (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"discount_percent\": 20,\n  \"stock\": 12\n}" }
+          }
+        },
+        {
+          "name": "Add favorite",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/favorite/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", "favorite", ""] }
+          }
+        },
+        {
+          "name": "Remove favorite",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/favorite/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", "favorite", ""] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "List cart",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/cart/items/", "host": ["{{base_url}}"], "path": ["api", "cart", "items", ""] } }
+        },
+        {
+          "name": "Add item",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "if (pm.response.code === 201) { pm.collectionVariables.set('cart_item_id', pm.response.json().id); }"
+              ] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/cart/items/", "host": ["{{base_url}}"], "path": ["api", "cart", "items", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"product\": {{product_id}},\n  \"quantity\": 1\n}" }
+          }
+        },
+        {
+          "name": "Update quantity",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/cart/items/{{cart_item_id}}/", "host": ["{{base_url}}"], "path": ["api", "cart", "items", "{{cart_item_id}}", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"quantity\": 2\n}" }
+          }
+        },
+        {
+          "name": "Delete item",
+          "request": { "method": "DELETE", "url": { "raw": "{{base_url}}/api/cart/items/{{cart_item_id}}/", "host": ["{{base_url}}"], "path": ["api", "cart", "items", "{{cart_item_id}}", ""] } }
+        },
+        {
+          "name": "Clear cart",
+          "request": { "method": "DELETE", "url": { "raw": "{{base_url}}/api/cart/clear/", "host": ["{{base_url}}"], "path": ["api", "cart", "clear", ""] } }
+        },
+        {
+          "name": "Cart summary",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/cart/summary/", "host": ["{{base_url}}"], "path": ["api", "cart", "summary", ""] } }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Create order",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "if (pm.response.code === 201) { pm.collectionVariables.set('order_id', pm.response.json().id); }"
+              ] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/orders/", "host": ["{{base_url}}"], "path": ["api", "orders", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"recipient_name\": \"Анна Соколова\",\n  \"recipient_phone\": \"+79991234567\",\n  \"city\": \"Москва\",\n  \"street\": \"Тверская\",\n  \"house\": \"7\",\n  \"apartment\": \"34\",\n  \"postal_code\": \"101000\",\n  \"payment_method\": \"card_on_delivery\",\n  \"comment\": \"Позвонить за час\"\n}" }
+          }
+        },
+        {
+          "name": "List my orders",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/orders/", "host": ["{{base_url}}"], "path": ["api", "orders", ""] } }
+        },
+        {
+          "name": "Order detail",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/", "host": ["{{base_url}}"], "path": ["api", "orders", "{{order_id}}", ""] } }
+        },
+        {
+          "name": "Cancel order",
+          "request": { "method": "POST", "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/cancel/", "host": ["{{base_url}}"], "path": ["api", "orders", "{{order_id}}", "cancel", ""] } }
+        },
+        {
+          "name": "Update status (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/orders/{{order_id}}/status/", "host": ["{{base_url}}"], "path": ["api", "orders", "{{order_id}}", "status", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"processing\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Create review",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "if (pm.response.code === 201) { pm.collectionVariables.set('review_id', pm.response.json().id); }"
+              ] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/reviews/", "host": ["{{base_url}}"], "path": ["api", "reviews", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"product\": {{product_id}},\n  \"rating\": 5,\n  \"text\": \"Отличный набор, собирали всей семьёй и остались довольны.\"\n}" }
+          }
+        },
+        {
+          "name": "Product reviews",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/reviews/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", "reviews", ""] }
+          }
+        },
+        {
+          "name": "Update review",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/reviews/{{review_id}}/", "host": ["{{base_url}}"], "path": ["api", "reviews", "{{review_id}}", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"text\": \"Обновлённый отзыв: набор по-прежнему радует.\"\n}" }
+          }
+        },
+        {
+          "name": "Moderate review (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/api/reviews/{{review_id}}/moderate/", "host": ["{{base_url}}"], "path": ["api", "reviews", "{{review_id}}", "moderate", ""] },
+            "body": { "mode": "raw", "raw": "{\n  \"is_approved\": true,\n  \"moderation_comment\": \"Опубликовано\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Sales report (admin)",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/analytics/sales/", "host": ["{{base_url}}"], "path": ["api", "analytics", "sales", ""] } }
+        },
+        {
+          "name": "Product popularity (admin)",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/analytics/products/", "host": ["{{base_url}}"], "path": ["api", "analytics", "products", ""] } }
+        },
+        {
+          "name": "Low stock (admin)",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/api/analytics/low-stock/", "host": ["{{base_url}}"], "path": ["api", "analytics", "low-stock", ""] } }
+        }
+      ]
+    }
+  ]
+}
