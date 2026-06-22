@@ -69,7 +69,7 @@ if SILKY_ENABLED:
     SILKY_PYTHON_PROFILER = True
     SILKY_MAX_RECORDED_REQUESTS = 1000
 
-ROOT_URLCONF = 'petcare.urls'
+ROOT_URLCONF = 'kubkubych.urls'
 
 TEMPLATES = [
     {
@@ -86,7 +86,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'petcare.wsgi.application'
+WSGI_APPLICATION = 'kubkubych.wsgi.application'
 
 DATABASES = {
     'default': {
