@@ -33,6 +33,7 @@ class OrderViewSet(
             Order.objects.select_related('user')
             .prefetch_related('items__product')
             .annotate(items_count=Count('items'))
+            .order_by('-created_at')
         )
         user = self.request.user
         if user.is_authenticated and user.role == 'admin':

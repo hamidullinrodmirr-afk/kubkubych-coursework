@@ -3,10 +3,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
-from . import views
+from . import api_views, views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    path('api/health/', api_views.health_check, name='health-check'),
+    path('api/debug/sentry-test/', api_views.sentry_test, name='sentry-test'),
 
     path('api/auth/', include('users.urls')),
     path('api/users/', include('users.user_urls')),
