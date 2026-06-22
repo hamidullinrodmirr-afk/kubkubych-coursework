@@ -45,11 +45,10 @@ INSTALLED_APPS = [
     'django_celery_beat',
 
     'users',
-    'pets',
-    'doctors',
-    'services',
-    'appointments',
-    'reviews',
+    'products',
+    'cart',
+    'orders',
+    'product_reviews',
 ]
 
 MIDDLEWARE = [
@@ -157,7 +156,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '1025'))
 EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = 'noreply@petcare.ru'
+DEFAULT_FROM_EMAIL = 'noreply@kubkubych.ru'
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
@@ -173,24 +172,7 @@ CELERY_BROKER_CONNECTION_RETRY = False
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
 CELERY_BROKER_TRANSPORT_OPTIONS = {'socket_connect_timeout': 2, 'socket_timeout': 2}
 
-CELERY_BEAT_SCHEDULE = {
-    'send-appointment-reminders': {
-        'task': 'appointments.tasks.send_appointment_reminder',
-        'schedule': crontab(minute=0),
-    },
-    'auto-cancel-unconfirmed': {
-        'task': 'appointments.tasks.auto_cancel_unconfirmed',
-        'schedule': crontab(minute=30, hour='*/6'),
-    },
-    'send-daily-report': {
-        'task': 'appointments.tasks.send_daily_report',
-        'schedule': crontab(hour=23, minute=0),
-    },
-    'cleanup-old-appointments': {
-        'task': 'appointments.tasks.cleanup_old_appointments',
-        'schedule': crontab(hour=3, minute=0, day_of_week=1),
-    },
-}
+CELERY_BEAT_SCHEDULE = {}
 
 if TESTING:
     CELERY_TASK_ALWAYS_EAGER = True
