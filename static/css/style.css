@@ -1334,6 +1334,43 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     opacity: 0.5;
 }
 
+/* Storefront refinement */
+.eyebrow { display: inline-block; color: var(--brand); font-weight: 800; font-size: .78rem; letter-spacing: .11em; text-transform: uppercase; margin-bottom: var(--s-2); }
+.section--tint { background: var(--surface); border-block: 1px solid var(--line); }
+.catalog-toolbar { display: grid; grid-template-columns: minmax(220px, 1.7fr) repeat(3, minmax(150px, 1fr)) auto; gap: 12px; align-items: end; padding: 18px; margin-bottom: 16px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.catalog-toolbar .form-control, .catalog-toolbar .search-input { height: 48px; width: 100%; }
+.catalog-count { color: var(--muted); font-size: .9rem; margin: 0 0 var(--s-4); }
+.checkout-layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 32px; align-items: start; }
+.form-section { padding: 34px; background: #fff; border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.form-section h1 { margin-bottom: 8px; }
+.form-intro { color: var(--muted); margin-bottom: 28px; }
+.form-subtitle { font-size: 1rem; margin: 22px 0 12px; text-transform: none; }
+.form-row--three { grid-template-columns: 1fr 1fr 1fr; }
+.btn--wide { width: 100%; justify-content: center; min-height: 52px; }
+.form-message { display: none; padding: 14px 16px; margin-top: 16px; border-radius: 12px; font-size: .92rem; line-height: 1.45; }
+.form-message--success, .form-message--error { display: block; }
+.form-message--success { color: #166534; background: #dcfce7; }
+.form-message--error { color: #9f1239; background: #ffe4e6; }
+.checkout-aside { padding: 26px; border-radius: var(--r-lg); background: var(--navy); color: #fff; position: sticky; top: 100px; }
+.checkout-aside h3 { color: #fff; font-size: 1.1rem; text-transform: none; margin-bottom: 14px; }
+.checkout-aside p { color: rgba(255,255,255,.78); font-size: .92rem; line-height: 1.55; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.14); }
+.checkout-aside p:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+.footer__inner--rich { grid-template-columns: 1.3fr 1fr 1fr 1fr; }
+.footer-note { color: rgba(255,255,255,.58); font-size: .87rem; line-height: 1.55; margin-top: 12px; }
+.about-hero { min-height: 460px; display: flex; align-items: center; }
+.about-story { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .75fr); gap: 72px; align-items: center; }
+.about-story h2 { margin-bottom: 18px; }
+.about-story p { color: var(--muted); line-height: 1.75; margin-bottom: 14px; font-size: 1.03rem; }
+.about-quote { display: flex; flex-direction: column; gap: 16px; padding: 34px; border-radius: var(--r-lg); color: var(--navy); background: #fff1d7; }
+.about-quote b { font-size: 1.28rem; line-height: 1.42; }
+.about-quote span { color: var(--muted); font-size: .9rem; }
+.feature-number { color: var(--brand); font-size: .82rem; font-weight: 800; letter-spacing: .12em; }
+.auth-wrap { max-width: 590px; }
+.auth-card { padding: 36px; background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.auth-card h1 { text-transform: none; margin-bottom: 8px; }
+.auth-card > p { color: var(--muted); margin-bottom: 24px; }
+.auth-card .auth-switch { text-align: center; margin: 20px 0 0; font-size: .92rem; }
+
 @media (max-width: 1024px) {
     .layout-sidebar { grid-template-columns: 1fr; }
     .specialties-box { position: static; }
@@ -1375,6 +1412,11 @@ textarea.form-control { min-height: 110px; resize: vertical; }
     .search-bar { padding: 6px 6px 6px 18px; }
 
     .footer__inner { grid-template-columns: 1fr; gap: var(--s-5); }
+
+    .catalog-toolbar, .checkout-layout, .about-story { grid-template-columns: 1fr; }
+    .form-row--three { grid-template-columns: 1fr; }
+    .checkout-aside { position: static; }
+    .footer__inner--rich { grid-template-columns: 1fr 1fr; }
     .footer__brand { font-size: 1.4rem; }
 }
 
