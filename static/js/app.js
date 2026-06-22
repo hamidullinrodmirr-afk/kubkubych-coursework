@@ -119,7 +119,8 @@ function showAlert(container, message, type = 'error') {
 function formatPrice(value) {
     const number = Number(value);
     if (Number.isNaN(number)) return value;
-    return number.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ₽';
+    const fractionDigits = Number.isInteger(number) ? 0 : 2;
+    return number.toLocaleString('ru-RU', { minimumFractionDigits: fractionDigits, maximumFractionDigits: 2 }) + ' ₽';
 }
 
 async function readError(response, fallback) {
