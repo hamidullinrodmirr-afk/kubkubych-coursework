@@ -8,10 +8,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
     """Позиция заказа со снимком названия, артикула и цены."""
 
     line_total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    product_slug = serializers.SlugField(source='product.slug', read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ('id', 'product', 'product_name', 'product_article', 'unit_price', 'quantity', 'line_total')
+        fields = (
+            'id', 'product', 'product_slug', 'product_name', 'product_article',
+            'unit_price', 'quantity', 'line_total',
+        )
 
 
 class OrderListSerializer(serializers.ModelSerializer):

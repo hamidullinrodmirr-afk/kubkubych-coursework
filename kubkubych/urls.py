@@ -20,9 +20,11 @@ urlpatterns = [
 
     path('', views.IndexView.as_view(), name='index'),
     path('catalog/', views.CatalogView.as_view(), name='catalog'),
-    path('catalog/<int:pk>/', views.ProductDetailView.as_view(), name='product-detail'),
+    path('products/<str:slug>/', views.ProductDetailView.as_view(), name='product-detail'),
     path('cart/', views.CartView.as_view(), name='cart'),
     path('checkout/', views.CheckoutView.as_view(), name='checkout'),
+    path('favorites/', views.FavoritesView.as_view(), name='favorites'),
+    path('orders/', views.OrderListView.as_view(), name='orders'),
     path('orders/<int:pk>/', views.OrderDetailView.as_view(), name='order-detail'),
     path('about/', views.AboutView.as_view(), name='about'),
     path('mission/', views.MissionView.as_view(), name='mission'),

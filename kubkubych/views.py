@@ -16,7 +16,7 @@ class ProductDetailView(TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context['product_id'] = kwargs['pk']
+        context['product_slug'] = kwargs['slug']
         return context
 
 
@@ -26,6 +26,14 @@ class CartView(TemplateView):
 
 class CheckoutView(TemplateView):
     template_name = 'orders/checkout.html'
+
+
+class FavoritesView(TemplateView):
+    template_name = 'favorites/index.html'
+
+
+class OrderListView(TemplateView):
+    template_name = 'orders/list.html'
 
 
 class OrderDetailView(TemplateView):
