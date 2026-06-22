@@ -17,7 +17,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('id', 'name', 'article', 'description', 'category', 'category_detail', 'age_min', 'age_max', 'pieces', 'price', 'discount_percent', 'final_price', 'stock', 'in_stock', 'image_url', 'is_active', 'is_favorite')
+        fields = ('id', 'name', 'article', 'description', 'category', 'category_detail', 'age_from', 'age_to', 'pieces', 'price', 'discount_percent', 'final_price', 'stock', 'in_stock', 'image_url', 'is_active', 'is_favorite')
         read_only_fields = ('article',)
 
     def get_in_stock(self, obj):

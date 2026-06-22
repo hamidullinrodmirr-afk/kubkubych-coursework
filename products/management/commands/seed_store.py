@@ -48,7 +48,7 @@ class Command(BaseCommand):
                 defaults={
                     'name': name, 'category': categories[category],
                     'description': f'Коллекционный набор «{name}»: детали для увлекательной сборки, игры и демонстрации на полке.',
-                    'age_min': min_age, 'age_max': max_age, 'pieces': pieces, 'price': Decimal(price),
+                    'age_from': min_age, 'age_to': max_age, 'pieces': pieces, 'price': Decimal(price),
                     'discount_percent': discount, 'stock': stock, 'is_active': True,
                     'image_url': f'https://images.brickset.com/sets/images/{article}-1.jpg',
                 },

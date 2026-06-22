@@ -8,7 +8,7 @@ from .models import Category, Product
 class ProductApiTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(name='LEGO City', slug='city')
-        self.product = Product.objects.create(category=self.category, name='Экскаватор', article='60420', description='Набор', age_min=8, age_max=12, pieces=633, price=Decimal('1000'), discount_percent=10, stock=3)
+        self.product = Product.objects.create(category=self.category, name='Экскаватор', article='60420', description='Набор', age_from=8, age_to=12, pieces=633, price=Decimal('1000'), discount_percent=10, stock=3)
 
     def test_public_catalog_shows_active_products_and_final_price(self):
         response = APIClient().get('/api/products/')
