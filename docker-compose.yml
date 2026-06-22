@@ -1,4 +1,4 @@
-version: '3.8'
+name: kubkubych
 
 services:
   db:
@@ -6,21 +6,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: petcare
-      POSTGRES_USER: petcare
-      POSTGRES_PASSWORD: petcare_secret
+      POSTGRES_DB: kubkubych
+      POSTGRES_USER: kubkubych
+      POSTGRES_PASSWORD: kubkubych_secret
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U petcare"]
+      test: ["CMD-SHELL", "pg_isready -U kubkubych"]
       interval: 5s
       timeout: 3s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -32,7 +30,7 @@ services:
     command: >
       bash -c "python manage.py migrate &&
                python manage.py collectstatic --noinput &&
-               gunicorn petcare.wsgi:application --bind 0.0.0.0:8000 --workers 3 --reload"
+               gunicorn kubkubych.wsgi:application --bind 0.0.0.0:8000 --workers 3 --reload"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -49,7 +47,7 @@ services:
 
   celery:
     build: .
-    command: celery -A petcare worker -l info
+    command: celery -A kubkubych worker -l info
     volumes:
       - .:/app
       - media_volume:/app/media
@@ -63,7 +61,7 @@ services:
 
   celery-beat:
     build: .
-    command: celery -A petcare beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A kubkubych beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/app
     env_file:
