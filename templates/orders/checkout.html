@@ -1,9 +1,97 @@
 {% extends 'base.html' %}
 {% block title %}Оформление заказа — КубКубыч{% endblock %}
 {% block content %}
-<section class="section"><div class="container checkout-layout"><div class="form-section"><span class="eyebrow">Почти готово</span><h1>Оформление заказа</h1><p class="form-intro">Проверьте контакты и укажите адрес. Мы покажем понятное сообщение, если что-то нужно исправить.</p><form id="checkoutForm"><div class="form-row"><div class="form-group"><label for="recipient_name">Получатель</label><input class="form-control" id="recipient_name" name="recipient_name" placeholder="Имя и фамилия" required></div><div class="form-group"><label for="phone">Телефон</label><input class="form-control" id="phone" name="phone" placeholder="+7 999 000-00-00" required></div></div><h3 class="form-subtitle">Адрес доставки</h3><div class="form-row"><div class="form-group"><label for="city">Город</label><input class="form-control" id="city" placeholder="Москва" required></div><div class="form-group"><label for="street">Улица</label><input class="form-control" id="street" placeholder="Ленина" required></div></div><div class="form-row form-row--three"><div class="form-group"><label for="house">Дом</label><input class="form-control" id="house" placeholder="12" required></div><div class="form-group"><label for="apartment">Квартира</label><input class="form-control" id="apartment" placeholder="34"></div><div class="form-group"><label for="postal">Индекс</label><input class="form-control" id="postal" inputmode="numeric" placeholder="101000" required></div></div><div class="form-group"><label for="payment_method">Способ оплаты</label><select class="form-control" id="payment_method" name="payment_method"><option value="card">Картой онлайн</option><option value="cash">При получении</option></select></div><button class="btn btn--green btn--wide" id="submitButton">Подтвердить заказ</button></form><div id="result" class="form-message" role="status"></div></div><aside class="checkout-aside"><h3>Важно знать</h3><p>Минимальная сумма заказа — 500 ₽.</p><p>Перед оформлением мы ещё раз проверяем наличие всех наборов.</p><p>После оформления заказ появится в личном кабинете.</p></aside></div></section>
+<section class="section">
+    <div class="container checkout-layout">
+        <div class="form-section">
+            <span class="eyebrow">Почти готово</span>
+            <h1>Оформление заказа</h1>
+            <p class="form-intro">Проверьте контакты и укажите адрес доставки.</p>
+            <form id="checkoutForm">
+                <div class="form-row">
+                    <div class="form-group"><label for="recipient_name">Получатель</label>
+                        <input class="form-control" id="recipient_name" placeholder="Имя и фамилия" required></div>
+                    <div class="form-group"><label for="recipient_phone">Телефон</label>
+                        <input class="form-control" id="recipient_phone" placeholder="+7 999 000-00-00" required></div>
+                </div>
+                <h3 class="form-subtitle">Адрес доставки</h3>
+                <div class="form-row">
+                    <div class="form-group"><label for="city">Город</label>
+                        <input class="form-control" id="city" placeholder="Москва" required></div>
+                    <div class="form-group"><label for="street">Улица</label>
+                        <input class="form-control" id="street" placeholder="Тверская" required></div>
+                </div>
+                <div class="form-row form-row--three">
+                    <div class="form-group"><label for="house">Дом</label>
+                        <input class="form-control" id="house" placeholder="7" required></div>
+                    <div class="form-group"><label for="apartment">Квартира</label>
+                        <input class="form-control" id="apartment" placeholder="34"></div>
+                    <div class="form-group"><label for="postal_code">Индекс</label>
+                        <input class="form-control" id="postal_code" inputmode="numeric" maxlength="6" placeholder="101000" required></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="payment_method">Способ оплаты</label>
+                        <select class="form-control" id="payment_method">
+                            <option value="card_on_delivery">Картой при получении</option>
+                            <option value="cash">Наличными при получении</option>
+                            <option value="online_mock">Онлайн-оплата (демо)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group"><label for="comment">Комментарий</label>
+                    <textarea class="form-control" id="comment" placeholder="Пожелания к доставке (необязательно)"></textarea></div>
+                <button class="btn btn--green btn--wide" id="submitButton">Подтвердить заказ</button>
+            </form>
+            <div id="result" class="form-message" role="status"></div>
+        </div>
+        <aside class="checkout-aside">
+            <h3>В вашей корзине</h3>
+            <div id="summary">—</div>
+            <p>Минимальная сумма заказа — 500 ₽, максимальная — 100 000 ₽.</p>
+            <p>Перед оформлением мы ещё раз проверяем наличие наборов.</p>
+        </aside>
+    </div>
+</section>
 {% endblock %}
-{% block extra_js %}<script>
-function errorText(payload){if(!payload)return 'Проверьте соединение и повторите попытку.';if(typeof payload==='string')return payload;return Object.entries(payload).map(([key,value])=>`${key==='non_field_errors'?'':key+': '}${Array.isArray(value)?value.join(', '):value}`).join(' ')}
-document.getElementById('checkoutForm').onsubmit=async event=>{event.preventDefault();const form=new FormData(event.target);const address=[document.getElementById('city').value.trim(),document.getElementById('street').value.trim(),document.getElementById('house').value.trim(),document.getElementById('apartment').value.trim()||'—',document.getElementById('postal').value.trim()].join(', ');const data={recipient_name:form.get('recipient_name'),phone:form.get('phone'),payment_method:form.get('payment_method'),delivery_address:address};const result=document.getElementById('result'),button=document.getElementById('submitButton');button.disabled=true;button.textContent='Проверяем заказ…';const response=await API.post('/orders/',data);let payload=null;try{payload=await response.json()}catch(e){}button.disabled=false;button.textContent='Подтвердить заказ';if(response.ok){result.className='form-message form-message--success';result.textContent=`Заказ №${payload.id} оформлен. Статус: ${payload.status_display}.`;event.target.reset();return}result.className='form-message form-message--error';result.textContent=errorText(payload)};
-</script>{% endblock %}
+{% block extra_js %}
+<script>
+if (!API.isAuthenticated()) window.location.href = '/login/?next=/checkout/';
+
+API.get('/cart/summary/').then(s => {
+    if (!s) return;
+    document.getElementById('summary').innerHTML = s.total_positions
+        ? `<div class="summary__row"><dt>Позиций</dt><dd>${s.total_positions}</dd></div>
+           <div class="summary__row"><dt>Единиц</dt><dd>${s.total_quantity}</dd></div>
+           <div class="summary__row"><dt>Сумма</dt><dd>${formatPrice(s.total)}</dd></div>`
+        : '<p class="empty-hint">Корзина пуста. <a href="/catalog/">Выбрать набор</a></p>';
+});
+
+document.getElementById('checkoutForm').onsubmit = async (event) => {
+    event.preventDefault();
+    const val = (id) => document.getElementById(id).value.trim();
+    const data = {
+        recipient_name: val('recipient_name'),
+        recipient_phone: val('recipient_phone'),
+        city: val('city'),
+        street: val('street'),
+        house: val('house'),
+        apartment: val('apartment'),
+        postal_code: val('postal_code'),
+        payment_method: val('payment_method'),
+        comment: val('comment'),
+    };
+    const result = document.getElementById('result');
+    const button = document.getElementById('submitButton');
+    button.disabled = true; button.textContent = 'Проверяем заказ…';
+    const response = await API.post('/orders/', data);
+    button.disabled = false; button.textContent = 'Подтвердить заказ';
+    if (response && response.ok) {
+        const order = await response.json();
+        window.location.href = `/orders/${order.id}/`;
+        return;
+    }
+    result.className = 'form-message form-message--error';
+    result.textContent = await readError(response, 'Проверьте корректность данных и сумму заказа.');
+};
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Мои заказы — КубКубыч{% endblock %}
+{% block content %}
+<section class="section">
+    <div class="container">
+        <span class="eyebrow">История покупок</span>
+        <h1 class="section-title">Мои заказы</h1>
+        <div id="orders" class="order-list"><div class="loading"><div class="spinner"></div>Загружаем заказы…</div></div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+function orderCard(order) {
+    return `<a class="order-card" href="/orders/${order.id}/">
+        <div>
+            <span class="order-card__number">${esc(order.order_number)}</span>
+            <span class="order-card__date">${formatDate(order.created_at)} · ${order.items_count} поз.</span>
+        </div>
+        <div class="order-card__right">
+            <b>${formatPrice(order.total)}</b>
+            <span class="status-badge status-badge--${order.status}">${esc(order.status_display)}</span>
+            <span class="order-card__link">Подробнее →</span>
+        </div>
+    </a>`;
+}
+
+API.get('/orders/').then(data => {
+    const box = document.getElementById('orders');
+    if (!data) { window.location.href = '/login/?next=/orders/'; return; }
+    const items = data.results || data;
+    box.innerHTML = items.length
+        ? items.map(orderCard).join('')
+        : '<div class="empty-state"><h3>Заказов пока нет</h3><p>В каталоге уже ждут наборы для первой покупки.</p><a class="btn btn--green" href="/catalog/">Перейти в каталог</a></div>';
+});
+</script>
+{% endblock %}

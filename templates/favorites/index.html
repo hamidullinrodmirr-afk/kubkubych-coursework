@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Избранное — КубКубыч{% endblock %}
+{% block content %}
+<section class="section">
+    <div class="container">
+        <span class="eyebrow">Сохранённые наборы</span>
+        <h1 class="section-title">Избранное</h1>
+        <div id="favorites" class="cards-grid"><div class="loading"><div class="spinner"></div>Загружаем избранное…</div></div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+if (!API.isAuthenticated()) window.location.href = '/login/?next=/favorites/';
+
+API.get('/products/favorites/').then(data => {
+    const box = document.getElementById('favorites');
+    const list = data || [];
+    box.innerHTML = list.length
+        ? list.map(productCard).join('')
+        : '<div class="empty-state"><h3>В избранном пусто</h3><p>Добавляйте наборы кнопкой «В избранное» в каталоге.</p><a class="btn btn--green" href="/catalog/">В каталог</a></div>';
+});
+</script>
+{% endblock %}

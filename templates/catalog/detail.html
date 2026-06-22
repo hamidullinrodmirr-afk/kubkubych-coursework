@@ -1,1 +1,131 @@
-{% extends 'base.html' %}{% block content %}<section class="section"><div class="container" id="product">Загрузка…</div></section>{% endblock %}{% block extra_js %}<script>API.get('/products/{{ product_id }}/').then(p=>{document.getElementById('product').innerHTML=`<img style="max-width:420px;width:100%;float:right;margin:0 0 24px 32px" src="${p.image_url}" alt="${p.name}"><h1>${p.name}</h1><p>${p.description}</p><p><b>Артикул:</b> ${p.article}<br><b>Серия:</b> ${p.category_detail.name}<br><b>Детали:</b> ${p.pieces}<br><b>Возраст:</b> ${p.age_from}–${p.age_to} лет</p><h2>${p.final_price} ₽</h2><p>${p.in_stock?'В наличии: '+p.stock:'Нет в наличии'}</p><button class="btn btn--green" onclick="add(${p.id})" ${p.in_stock?'':'disabled'}>Добавить в корзину</button>`});function add(id){API.post('/cart/items/',{product:id,quantity:1}).then(r=>alert(r.ok?'Набор добавлен в корзину':'Войдите в аккаунт или проверьте остаток'))}</script>{% endblock %}
+{% extends 'base.html' %}{% block title %}Набор — КубКубыч{% endblock %}
+{% block content %}
+<section class="section">
+    <div class="container">
+        <a class="back-link" href="/catalog/">← Назад в каталог</a>
+        <div id="product"><div class="loading"><div class="spinner"></div>Загружаем набор…</div></div>
+
+        <div class="product-reviews" id="reviews-block" hidden>
+            <h2 class="section-title">Отзывы</h2>
+            <div id="review-form-slot"></div>
+            <div class="reviews-grid" id="reviews"></div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const slug = "{{ product_slug|escapejs }}";
+let currentProduct = null;
+
+function priceMarkup(p) {
+    return p.discount_percent > 0
+        ? `<span class="product-price">${formatPrice(p.final_price)}</span> <s class="card__old">${formatPrice(p.price)}</s> <span class="chip chip--coral">−${p.discount_percent}%</span>`
+        : `<span class="product-price">${formatPrice(p.final_price)}</span>`;
+}
+
+function renderProduct(p) {
+    const fav = p.is_favorite ? 'is-active' : '';
+    const favText = p.is_favorite ? 'В избранном' : 'В избранное';
+    const rating = p.reviews_count
+        ? `★ ${Number(p.average_rating).toFixed(1)} · ${p.reviews_count} отз.`
+        : 'Пока без отзывов';
+    document.getElementById('product').innerHTML = `
+        <div class="product-detail">
+            <div class="product-detail__media"><img src="${esc(p.image_url)}" alt="${esc(p.name)}"></div>
+            <div class="product-detail__info">
+                <span class="chip">${esc(p.category_detail.name)}</span>
+                <h1>${esc(p.name)}</h1>
+                <p class="product-detail__rating">${rating}</p>
+                <p class="product-detail__desc">${esc(p.description)}</p>
+                <ul class="spec-list">
+                    <li><span>Артикул</span><b>${esc(p.article)}</b></li>
+                    <li><span>Серия</span><b>${esc(p.category_detail.name)}</b></li>
+                    <li><span>Возраст</span><b>${p.age_from}–${p.age_to} лет</b></li>
+                    <li><span>Деталей</span><b>${p.pieces}</b></li>
+                    <li><span>Наличие</span><b>${p.in_stock ? 'В наличии: ' + p.stock : 'Нет в наличии'}</b></li>
+                </ul>
+                <div class="product-detail__price">${priceMarkup(p)}</div>
+                <div class="product-detail__actions">
+                    <button class="btn btn--green" onclick="addToCart(${p.id})" ${p.in_stock ? '' : 'disabled'}>В корзину</button>
+                    <button class="icon-btn fav-btn ${fav}" onclick="toggleFavorite(${p.id}, this)">${favText}</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function reviewCard(r) {
+    return `<div class="review-card">
+        <div class="review-card__header">
+            <span class="review-card__author">${esc(r.author)}</span>
+            <span class="review-card__rating">${'★'.repeat(r.rating)}</span>
+        </div>
+        <p class="review-card__text">${esc(r.text)}</p>
+        <span class="review-card__date">${formatDate(r.created_at)}</span>
+    </div>`;
+}
+
+async function loadReviews(productId) {
+    const data = await API.get(`/products/${productId}/reviews/`) || [];
+    document.getElementById('reviews').innerHTML = data.length
+        ? data.map(reviewCard).join('')
+        : '<p class="empty-hint">Отзывов пока нет. Будьте первым после покупки.</p>';
+}
+
+function renderReviewForm() {
+    if (!API.isAuthenticated()) {
+        document.getElementById('review-form-slot').innerHTML =
+            '<p class="empty-hint"><a href="/login/">Войдите</a>, чтобы оставить отзыв на купленный набор.</p>';
+        return;
+    }
+    document.getElementById('review-form-slot').innerHTML = `
+        <form class="review-form" id="review-form">
+            <div class="form-row">
+                <div class="form-group"><label>Оценка</label>
+                    <select id="rating" class="form-control">
+                        <option value="5">5 — отлично</option><option value="4">4 — хорошо</option>
+                        <option value="3">3 — нормально</option><option value="2">2 — слабо</option><option value="1">1 — плохо</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group"><label>Отзыв</label>
+                <textarea id="text" class="form-control" minlength="10" placeholder="Расскажите о наборе (минимум 10 символов)"></textarea>
+            </div>
+            <button class="btn btn--green" type="submit">Отправить на модерацию</button>
+        </form>`;
+    document.getElementById('review-form').addEventListener('submit', submitReview);
+}
+
+async function submitReview(e) {
+    e.preventDefault();
+    const response = await API.post('/reviews/', {
+        product: currentProduct.id,
+        rating: Number(document.getElementById('rating').value),
+        text: document.getElementById('text').value,
+    });
+    if (response && response.ok) {
+        showAlert(document.body, 'Отзыв отправлен на модерацию', 'success');
+        document.getElementById('text').value = '';
+    } else {
+        showAlert(document.body, await readError(response, 'Отзыв можно оставить только после доставки набора'), 'error');
+    }
+}
+
+async function init() {
+    const data = await API.get('/products/?slug=' + encodeURIComponent(slug));
+    const list = data && (data.results || data);
+    if (!list || !list.length) {
+        document.getElementById('product').innerHTML = '<div class="empty-state"><h3>Набор не найден</h3><p>Возможно, он снят с продажи.</p><a class="btn btn--green" href="/catalog/">В каталог</a></div>';
+        return;
+    }
+    currentProduct = list[0];
+    document.title = currentProduct.name + ' — КубКубыч';
+    renderProduct(currentProduct);
+    document.getElementById('reviews-block').hidden = false;
+    renderReviewForm();
+    loadReviews(currentProduct.id);
+}
+init();
+</script>
+{% endblock %}

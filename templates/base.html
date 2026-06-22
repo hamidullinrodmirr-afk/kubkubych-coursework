@@ -1,3 +1,76 @@
 {% load static %}
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}КубКубыч{% endblock %}</title><link rel="stylesheet" href="{% static 'css/style.css' %}"></head>
-<body><header class="header"><div class="header__inner"><a class="header__logo" href="/">КубКубыч</a><nav><ul class="header__nav"><li><a href="/catalog/">Каталог</a></li><li><a href="/delivery/">Доставка</a></li><li><a href="/about/">О нас</a></li><li><a href="/mission/">Миссия</a></li><li><a href="/cart/">Корзина</a></li></ul></nav><div class="header__actions"><a href="/profile/" class="btn btn--sm btn--outline">Кабинет</a><a href="/login/" class="btn btn--sm btn--green">Войти</a></div></div></header><main>{% block content %}{% endblock %}</main><footer class="footer"><div class="footer__inner footer__inner--rich"><div><h4>КУБКУБЫЧ</h4><p>Магазин наборов для детей, семейных вечеров и взрослых коллекционеров.</p><p class="footer-note">Помогаем находить повод собрать что-то классное своими руками.</p></div><div><h4>ПОКУПАТЕЛЯМ</h4><ul class="footer__links"><li><a href="/catalog/">Каталог наборов</a></li><li><a href="/cart/">Корзина</a></li><li><a href="/delivery/">Доставка и оплата</a></li><li><a href="/profile/">Личный кабинет</a></li></ul></div><div><h4>О МАГАЗИНЕ</h4><ul class="footer__links"><li><a href="/about/">О нас</a></li><li><a href="/mission/">Наша миссия</a></li><li><a href="/delivery/">Возврат и поддержка</a></li></ul></div><div><h4>НА СВЯЗИ</h4><ul class="footer__links"><li>Пн–Вс, 10:00–21:00</li><li><a href="mailto:hello@kubkubych.ru">hello@kubkubych.ru</a></li><li><a href="tel:+74951234567">+7 (495) 123-45-67</a></li><li>Москва, доставка по России</li></ul></div></div><div class="footer__bottom">© 2026 КубКубыч · Курсовой проект Хамидуллина Радмира Робертовича, гр. 241-672.</div></footer><script src="{% static 'js/api.js' %}"></script>{% block extra_js %}{% endblock %}</body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}КубКубыч — конструкторы LEGO{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<header class="header">
+    <div class="header__inner">
+        <a class="header__logo" href="/">{{ site.shop_name|default:'КубКубыч' }}</a>
+        <button class="header__burger" aria-label="Меню"><span></span><span></span><span></span></button>
+        <nav>
+            <ul class="header__nav">
+                <li><a href="/catalog/">Каталог</a></li>
+                <li><a href="/favorites/">Избранное</a></li>
+                <li><a href="/orders/">Заказы</a></li>
+                <li><a href="/delivery/">Доставка</a></li>
+                <li><a href="/about/">О нас</a></li>
+                <li><a href="/cart/">Корзина</a></li>
+            </ul>
+        </nav>
+        <div class="header__actions">
+            <a href="/profile/" class="btn btn--sm btn--outline">Кабинет</a>
+            <a href="/login/" class="btn btn--sm btn--green">Войти</a>
+        </div>
+    </div>
+</header>
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer class="footer">
+    <div class="footer__inner footer__inner--rich">
+        <div>
+            <h4>{{ site.shop_name|default:'КУБКУБЫЧ' }}</h4>
+            <p>Магазин конструкторов LEGO для детей, семейных вечеров и взрослых коллекционеров.</p>
+            <p class="footer-note">Помогаем выбрать набор по возрасту, бюджету и любимой серии.</p>
+        </div>
+        <div>
+            <h4>ПОКУПАТЕЛЯМ</h4>
+            <ul class="footer__links">
+                <li><a href="/catalog/">Каталог наборов</a></li>
+                <li><a href="/cart/">Корзина</a></li>
+                <li><a href="/delivery/">Доставка и оплата</a></li>
+                <li><a href="/profile/">Личный кабинет</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>О МАГАЗИНЕ</h4>
+            <ul class="footer__links">
+                <li><a href="/about/">О нас</a></li>
+                <li><a href="/mission/">Наша миссия</a></li>
+                <li><a href="/favorites/">Избранное</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>НА СВЯЗИ</h4>
+            <ul class="footer__links">
+                <li>Пн–Вс, 10:00–21:00</li>
+                <li><a href="mailto:{{ site.contact_email|default:'hello@kubkubych.ru' }}">{{ site.contact_email|default:'hello@kubkubych.ru' }}</a></li>
+                <li><a href="tel:{{ site.contact_phone|default:'+74951234567' }}">{{ site.contact_phone|default:'+7 (495) 123-45-67' }}</a></li>
+                <li>{{ site.address|default:'Москва, доставка по России' }}</li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer__bottom">© 2026 {{ site.shop_name|default:'КубКубыч' }} · Курсовой проект Хамидуллина Радмира Робертовича, гр. 241-672.</div>
+</footer>
+
+<script src="{% static 'js/api.js' %}"></script>
+<script src="{% static 'js/app.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

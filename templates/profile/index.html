@@ -1,9 +1,70 @@
 {% extends 'base.html' %}
 {% block title %}Личный кабинет — КубКубыч{% endblock %}
 {% block content %}
-<section class="section"><div class="container"><span class="eyebrow">Ваш аккаунт</span><h1>Личный кабинет</h1><div id="profile" class="profile-card">Загрузка…</div><div class="section__header profile-orders-title"><span class="eyebrow">История покупок</span><h2>Мои заказы</h2><p>Откройте заказ, чтобы посмотреть состав, адрес и текущий статус.</p></div><div id="orders" class="order-list"></div></div></section>
+<section class="section">
+    <div class="container">
+        <span class="eyebrow">Ваш аккаунт</span>
+        <h1 class="section-title">Личный кабинет</h1>
+        <div class="profile-grid">
+            <div class="profile-content">
+                <h2 class="form-subtitle">Профиль</h2>
+                <form id="profileForm">
+                    <div class="form-row">
+                        <div class="form-group"><label for="first_name">Имя</label><input class="form-control" id="first_name"></div>
+                        <div class="form-group"><label for="last_name">Фамилия</label><input class="form-control" id="last_name"></div>
+                    </div>
+                    <div class="form-group"><label for="email">Email</label><input class="form-control" id="email" disabled></div>
+                    <div class="form-group"><label for="phone">Телефон</label><input class="form-control" id="phone" placeholder="+7 999 000-00-00"></div>
+                    <button class="btn btn--green" type="submit">Сохранить</button>
+                    <button class="btn btn--outline" type="button" onclick="API.logout()">Выйти</button>
+                </form>
+                <div id="profileMsg" class="form-message"></div>
+            </div>
+            <aside class="profile-content">
+                <h2 class="form-subtitle">Последние заказы</h2>
+                <div id="orders" class="order-list"></div>
+                <a class="btn btn--outline btn--full" href="/orders/" style="margin-top:14px">Все заказы</a>
+                <a class="btn btn--outline btn--full" href="/favorites/" style="margin-top:10px">Избранное</a>
+            </aside>
+        </div>
+    </div>
+</section>
 {% endblock %}
-{% block extra_js %}<script>
-const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
-Promise.all([API.get('/auth/me/'),API.get('/orders/')]).then(([profile,orders])=>{if(!profile){location.href='/login/';return}document.getElementById('profile').innerHTML=`<b>${escapeHtml(profile.first_name)} ${escapeHtml(profile.last_name)}</b><span>${escapeHtml(profile.email)}</span><span>${escapeHtml(profile.phone||'Телефон не указан')}</span>`;const items=orders?.results||orders||[];document.getElementById('orders').innerHTML=items.map(order=>`<a class="order-card" href="/orders/${order.id}/"><div><span class="order-card__number">Заказ №${order.id}</span><span class="order-card__date">${new Date(order.created_at).toLocaleDateString('ru-RU')}</span></div><div class="order-card__right"><b>${order.total} ₽</b><span class="order-status">${escapeHtml(order.status_display)}</span><span class="order-card__link">Подробнее →</span></div></a>`).join('')||'<div class="empty-state"><h3>Заказов пока нет</h3><p>В каталоге уже ждут наборы для первой покупки.</p><a class="btn btn--green" href="/catalog/">Перейти в каталог</a></div>'})
-</script>{% endblock %}
+{% block extra_js %}
+<script>
+if (!API.isAuthenticated()) window.location.href = '/login/?next=/profile/';
+
+async function load() {
+    const [profile, orders] = await Promise.all([API.get('/auth/me/'), API.get('/orders/')]);
+    if (!profile) { window.location.href = '/login/'; return; }
+    document.getElementById('first_name').value = profile.first_name || '';
+    document.getElementById('last_name').value = profile.last_name || '';
+    document.getElementById('email').value = profile.email || '';
+    document.getElementById('phone').value = profile.phone || '';
+
+    const items = (orders && (orders.results || orders)) || [];
+    document.getElementById('orders').innerHTML = items.length
+        ? items.slice(0, 5).map(o => `<a class="order-card" href="/orders/${o.id}/">
+            <div><span class="order-card__number">${esc(o.order_number)}</span>
+            <span class="order-card__date">${formatDate(o.created_at)}</span></div>
+            <div class="order-card__right"><b>${formatPrice(o.total)}</b>
+            <span class="status-badge status-badge--${o.status}">${esc(o.status_display)}</span></div></a>`).join('')
+        : '<p class="empty-hint">Заказов пока нет.</p>';
+}
+
+document.getElementById('profileForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const data = {
+        first_name: document.getElementById('first_name').value,
+        last_name: document.getElementById('last_name').value,
+        phone: document.getElementById('phone').value,
+    };
+    const response = await API.patch('/auth/me/', data);
+    const msg = document.getElementById('profileMsg');
+    msg.className = 'form-message ' + (response && response.ok ? 'form-message--success' : 'form-message--error');
+    msg.textContent = response && response.ok ? 'Профиль обновлён' : 'Не удалось сохранить изменения';
+};
+
+load();
+</script>
+{% endblock %}

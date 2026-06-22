@@ -115,3 +115,82 @@ function showAlert(container, message, type = 'error') {
     container.prepend(div);
     setTimeout(() => { if (div.parentElement) div.remove(); }, 7000);
 }
+
+function formatPrice(value) {
+    const number = Number(value);
+    if (Number.isNaN(number)) return value;
+    return number.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ₽';
+}
+
+async function readError(response, fallback) {
+    try {
+        const data = await response.json();
+        if (typeof data === 'string') return data;
+        const first = Object.values(data)[0];
+        return Array.isArray(first) ? first[0] : (first || fallback);
+    } catch (e) {
+        return fallback;
+    }
+}
+
+// Добавляет набор в корзину; при отсутствии входа уводит на страницу логина.
+async function addToCart(productId, quantity = 1) {
+    if (!API.isAuthenticated()) {
+        window.location.href = '/login/?next=' + encodeURIComponent(window.location.pathname);
+        return;
+    }
+    const response = await API.post('/cart/items/', { product: productId, quantity });
+    if (response && response.ok) {
+        showAlert(document.body, 'Набор добавлен в корзину', 'success');
+    } else {
+        showAlert(document.body, await readError(response, 'Не удалось добавить набор'), 'error');
+    }
+}
+
+// Единый HTML карточки набора для главной, каталога и избранного.
+function productCard(p) {
+    const priceBlock = p.discount_percent > 0
+        ? `<b>${formatPrice(p.final_price)}</b> <s class="card__old">${formatPrice(p.price)}</s>`
+        : `<b>${formatPrice(p.final_price)}</b>`;
+    const rating = p.reviews_count
+        ? `<span class="card__rating">★ ${Number(p.average_rating).toFixed(1)}</span> <span class="card__reviews">${p.reviews_count}</span>`
+        : '<span class="card__reviews">Нет отзывов</span>';
+    const stock = p.in_stock ? `В наличии: ${p.stock}` : 'Нет в наличии';
+    const favClass = p.is_favorite ? 'is-active' : '';
+    const favText = p.is_favorite ? 'В избранном' : 'В избранное';
+    return `<article class="card">
+        ${p.discount_percent > 0 ? `<span class="card__badge">−${p.discount_percent}%</span>` : ''}
+        <a href="/products/${esc(p.slug)}/"><img class="card__image" src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy"></a>
+        <div class="card__body">
+            <span class="chip">${esc(p.category_detail.name)}</span>
+            <a class="card__title" href="/products/${esc(p.slug)}/">${esc(p.name)}</a>
+            <p class="card__subtitle">${esc(p.article)} · ${p.pieces} деталей · ${p.age_from}–${p.age_to} лет</p>
+            <div class="card__meta">${rating}<span class="card__stock">${stock}</span></div>
+            <div class="card__footer">
+                <div class="card__price">${priceBlock}</div>
+                <div class="card__actions">
+                    <button class="icon-btn fav-btn ${favClass}" onclick="toggleFavorite(${p.id}, this)">${favText}</button>
+                    <button class="btn btn--sm btn--green" onclick="addToCart(${p.id})" ${p.in_stock ? '' : 'disabled'}>В корзину</button>
+                </div>
+            </div>
+        </div>
+    </article>`;
+}
+
+// Переключает избранное для набора и обновляет состояние кнопки.
+async function toggleFavorite(productId, button) {
+    if (!API.isAuthenticated()) {
+        window.location.href = '/login/?next=' + encodeURIComponent(window.location.pathname);
+        return;
+    }
+    const active = button.classList.contains('is-active');
+    const response = active
+        ? await API.delete(`/products/${productId}/favorite/`)
+        : await API.post(`/products/${productId}/favorite/`);
+    if (response && response.ok) {
+        button.classList.toggle('is-active', !active);
+        button.textContent = !active ? 'В избранном' : 'В избранное';
+    } else {
+        showAlert(document.body, 'Войдите, чтобы пользоваться избранным', 'error');
+    }
+}
