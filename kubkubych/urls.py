@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/orders/', include('orders.urls')),
     path('api/reviews/', include('product_reviews.urls')),
     path('api/analytics/', include('analytics.urls')),
+    path('api/settings/', include('siteconfig.urls')),
 
     path('', views.IndexView.as_view(), name='index'),
     path('catalog/', views.CatalogView.as_view(), name='catalog'),
