@@ -26,3 +26,16 @@ class OrderTests(TestCase):
     def test_checkout_rejects_invalid_address(self):
         response = self.client.post('/api/orders/', {'recipient_name': 'Иван', 'phone': '+7999', 'delivery_address': 'Москва', 'payment_method': 'card'}, format='json')
         self.assertEqual(response.status_code, 400)
+
+    def test_buyer_can_open_own_order_details(self):
+        created = self.client.post(
+            '/api/orders/',
+            {
+                'recipient_name': 'Иван Иванов', 'phone': '+79990000000',
+                'delivery_address': 'Москва, Ленина, 1, 101000', 'payment_method': 'card',
+            },
+            format='json',
+        )
+        response = self.client.get(f"/api/orders/{created.data['id']}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['items'][0]['product_name'], self.product.name)

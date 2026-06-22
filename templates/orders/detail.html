@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Заказ — КубКубыч{% endblock %}
+{% block content %}
+<section class="section"><div class="container order-detail" id="orderDetail">Загрузка заказа…</div></section>
+{% endblock %}
+{% block extra_js %}<script>
+const escapeHtml=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+API.get('/orders/{{ order_id }}/').then(order=>{const root=document.getElementById('orderDetail');if(!order){root.innerHTML='<div class="empty-state"><h2>Заказ не найден</h2><p>Возможно, он принадлежит другому аккаунту.</p><a class="btn btn--green" href="/profile/">В кабинет</a></div>';return}const payment=order.payment_method==='card'?'Банковская карта':'При получении';root.innerHTML=`<a class="back-link" href="/profile/">← Все заказы</a><div class="order-detail__header"><div><span class="eyebrow">Заказ №${order.id}</span><h1>Детали заказа</h1><p>Оформлен ${new Date(order.created_at).toLocaleDateString('ru-RU')}</p></div><span class="order-status order-status--large">${escapeHtml(order.status_display)}</span></div><div class="order-detail__grid"><div class="order-detail__items"><h2>Состав заказа</h2>${order.items.map(item=>`<article class="order-item"><div><b>${escapeHtml(item.product_name)}</b><span>Артикул ${escapeHtml(item.article)} · ${item.quantity} шт.</span></div><strong>${item.unit_price} ₽</strong></article>`).join('')}<div class="order-total"><span>Итого</span><b>${order.total} ₽</b></div></div><aside class="order-detail__info"><h3>Доставка</h3><p><b>Получатель</b><span>${escapeHtml(order.recipient_name)}</span></p><p><b>Телефон</b><span>${escapeHtml(order.phone)}</span></p><p><b>Адрес</b><span>${escapeHtml(order.delivery_address)}</span></p><p><b>Оплата</b><span>${payment}</span></p></aside></div>`})
+</script>{% endblock %}

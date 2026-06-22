@@ -28,6 +28,15 @@ class CheckoutView(TemplateView):
     template_name = 'orders/checkout.html'
 
 
+class OrderDetailView(TemplateView):
+    template_name = 'orders/detail.html'
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['order_id'] = kwargs['pk']
+        return context
+
+
 class AboutView(TemplateView):
     template_name = 'pages/about.html'
 
