@@ -1,41 +1,54 @@
 from decimal import Decimal
+
 from django.test import TestCase
 from rest_framework.test import APIClient
-from users.models import User
-from products.models import Category, Product
+
 from cart.models import CartItem
+from products.models import Category, Product
+from users.models import User
 from .models import Order
+
+VALID_CHECKOUT = {
+    'recipient_name': 'Иван Иванов',
+    'recipient_phone': '+79990000000',
+    'city': 'Москва',
+    'street': 'Ленина',
+    'house': '1',
+    'postal_code': '101000',
+    'payment_method': 'card_on_delivery',
+}
 
 
 class OrderTests(TestCase):
     def setUp(self):
         category = Category.objects.create(name='LEGO City', slug='city')
-        self.product = Product.objects.create(category=category, name='Экскаватор', article='60420', description='Набор', age_from=8, age_to=12, pieces=633, price=Decimal('1000'), stock=2)
-        self.user = User.objects.create_user(email='buyer@example.com', password='secret123', first_name='Иван', last_name='Иванов')
+        self.product = Product.objects.create(
+            category=category, name='Экскаватор', article='60420', description='Набор',
+            age_from=8, age_to=12, pieces=633, price=Decimal('1000'), stock=2,
+        )
+        self.user = User.objects.create_user(
+            email='buyer@example.com', password='secret123', first_name='Иван', last_name='Иванов'
+        )
         CartItem.objects.create(user=self.user, product=self.product, quantity=1)
-        self.client = APIClient(); self.client.force_authenticate(self.user)
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
 
     def test_checkout_creates_snapshot_and_decreases_stock(self):
-        response = self.client.post('/api/orders/', {'recipient_name': 'Иван Иванов', 'phone': '+79990000000', 'delivery_address': 'Москва, Ленина, 1, 101000', 'payment_method': 'card'}, format='json')
+        response = self.client.post('/api/orders/', VALID_CHECKOUT, format='json')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Order.objects.count(), 1)
         self.product.refresh_from_db()
         self.assertEqual(self.product.stock, 1)
         self.assertEqual(CartItem.objects.count(), 0)
+        self.assertTrue(response.data['order_number'])
 
     def test_checkout_rejects_invalid_address(self):
-        response = self.client.post('/api/orders/', {'recipient_name': 'Иван', 'phone': '+7999', 'delivery_address': 'Москва', 'payment_method': 'card'}, format='json')
+        payload = {**VALID_CHECKOUT, 'postal_code': '12', 'city': ''}
+        response = self.client.post('/api/orders/', payload, format='json')
         self.assertEqual(response.status_code, 400)
 
     def test_buyer_can_open_own_order_details(self):
-        created = self.client.post(
-            '/api/orders/',
-            {
-                'recipient_name': 'Иван Иванов', 'phone': '+79990000000',
-                'delivery_address': 'Москва, Ленина, 1, 101000', 'payment_method': 'card',
-            },
-            format='json',
-        )
+        created = self.client.post('/api/orders/', VALID_CHECKOUT, format='json')
         response = self.client.get(f"/api/orders/{created.data['id']}/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['items'][0]['product_name'], self.product.name)
