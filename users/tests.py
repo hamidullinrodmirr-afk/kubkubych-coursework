@@ -105,7 +105,7 @@ class UserModerationTest(TestCase):
 
     def test_admin_can_block_buyer(self):
         self.client.force_authenticate(self.admin)
-        response = self.client.patch(f'/api/auth/users/{self.buyer.id}/block/', {'is_active': False}, format='json')
+        response = self.client.patch(f'/api/users/{self.buyer.id}/block/', format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.buyer.refresh_from_db()
         self.assertFalse(self.buyer.is_active)

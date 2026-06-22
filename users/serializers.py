@@ -19,18 +19,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = ('email', 'first_name', 'last_name', 'phone', 'password', 'password_confirm')
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
-        """Проверяет совпадение паролей и стойкость по валидаторам Django.
-
-        Args:
-            attrs: Данные сериализатора до сохранения.
-
-        Returns:
-            Проверенные данные без служебного поля ``password_confirm``.
-
-        Raises:
-            serializers.ValidationError: При несовпадении паролей либо
-                слабом пароле (по ``AUTH_PASSWORD_VALIDATORS``).
-        """
+        """Проверяет совпадение паролей и их стойкость по валидаторам Django."""
         if attrs['password'] != attrs.pop('password_confirm'):
             raise serializers.ValidationError({'password_confirm': 'Пароли не совпадают'})
 
@@ -46,23 +35,18 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data: dict[str, Any]) -> Any:
-        """Создаёт пользователя через менеджер (хеширование пароля).
-
-        Args:
-            validated_data: Проверенные данные сериализатора.
-
-        Returns:
-            Созданный пользователь.
-        """
+        """Создаёт пользователя через менеджер (хеширование пароля)."""
         return User.objects.create_user(**validated_data)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Профиль текущего пользователя; роль и email менять нельзя."""
 
+    full_name = serializers.CharField(read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'phone', 'role', 'avatar', 'date_joined')
+        fields = ('id', 'email', 'first_name', 'last_name', 'full_name', 'phone', 'role', 'avatar', 'date_joined')
         read_only_fields = ('id', 'email', 'role', 'date_joined')
 
 
@@ -72,3 +56,32 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'email', 'first_name', 'last_name', 'phone', 'role', 'is_active')
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    """Полная карточка пользователя для администратора."""
+
+    full_name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'id', 'email', 'first_name', 'last_name', 'full_name', 'phone',
+            'role', 'is_active', 'is_staff', 'date_joined', 'updated_at',
+        )
+        read_only_fields = ('id', 'email', 'is_staff', 'date_joined', 'updated_at')
+
+
+class UserRoleSerializer(serializers.ModelSerializer):
+    """Назначение роли пользователю администратором."""
+
+    class Meta:
+        model = User
+        fields = ('id', 'role')
+        read_only_fields = ('id',)
+
+
+class LogoutSerializer(serializers.Serializer):
+    """Отзыв refresh-токена при выходе."""
+
+    refresh = serializers.CharField()
