@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
-from products.serializers import ProductSerializer
+from products.serializers import ProductListSerializer
 from .models import CartItem
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product_detail = ProductSerializer(source='product', read_only=True)
+    product_detail = ProductListSerializer(source='product', read_only=True)
     subtotal = serializers.SerializerMethodField()
 
     class Meta:
