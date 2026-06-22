@@ -28,6 +28,18 @@ class CheckoutView(TemplateView):
     template_name = 'orders/checkout.html'
 
 
+class AboutView(TemplateView):
+    template_name = 'pages/about.html'
+
+
+class MissionView(TemplateView):
+    template_name = 'pages/mission.html'
+
+
+class DeliveryView(TemplateView):
+    template_name = 'pages/delivery.html'
+
+
 class LoginView(TemplateView):
     template_name = 'auth/login.html'
 
