@@ -82,7 +82,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return ProductListSerializer
 
     def get_permissions(self):
-        if self.action in ('list', 'retrieve', 'popular', 'discounts'):
+        if self.action in ('list', 'retrieve', 'popular', 'discounts', 'reviews'):
             return [permissions.AllowAny()]
         if self.action in ('favorite', 'favorites'):
             return [permissions.IsAuthenticated()]
@@ -133,6 +133,15 @@ class ProductViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().order_by('-sold_units', '-favorites_count')[:POPULAR_PRODUCTS_LIMIT]
         serializer = ProductListSerializer(queryset, many=True, context=self.get_serializer_context())
         return Response(serializer.data)
+
+    @action(detail=True, methods=('get',))
+    def reviews(self, request, pk=None):
+        """Одобренные отзывы конкретного набора."""
+        from product_reviews.serializers import ReviewSerializer
+
+        product = self.get_object()
+        approved = Review.objects.filter(product=product, is_approved=True).select_related('author')
+        return Response(ReviewSerializer(approved, many=True).data)
 
     @action(detail=False, methods=('get',))
     def discounts(self, request):
