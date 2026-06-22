@@ -9,6 +9,7 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('me/', views.ProfileView.as_view(), name='profile'),
     path('users/', views.UserListView.as_view(), name='user-list'),
+    path('users/<int:pk>/block/', views.UserBlockView.as_view(), name='user-block'),
 
     path('oauth/google/', GoogleLoginView.as_view(), name='oauth-google'),
     path('oauth/google/callback/', GoogleCallbackView.as_view(), name='oauth-google-callback'),

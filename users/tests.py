@@ -91,3 +91,21 @@ class AuthenticationTest(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
+
+
+class UserModerationTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_user(
+            email='admin@example.com', password='adminpass123', first_name='Админ', last_name='Магазина', role='admin',
+        )
+        self.buyer = User.objects.create_user(
+            email='buyer@example.com', password='buyerpass123', first_name='Покупатель', last_name='Тестовый',
+        )
+
+    def test_admin_can_block_buyer(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(f'/api/auth/users/{self.buyer.id}/block/', {'is_active': False}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.buyer.refresh_from_db()
+        self.assertFalse(self.buyer.is_active)

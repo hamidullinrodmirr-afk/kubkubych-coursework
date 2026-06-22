@@ -54,3 +54,22 @@ class UserListView(generics.ListAPIView):
     permission_classes = [IsAdmin]
     filterset_fields = ['role', 'is_active']
     search_fields = ['email', 'first_name', 'last_name']
+
+
+class UserBlockView(generics.UpdateAPIView):
+    """Блокировка или разблокировка покупателя администратором."""
+
+    queryset = User.objects.all()
+    serializer_class = UserListSerializer
+    permission_classes = [IsAdmin]
+
+    def patch(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        user = self.get_object()
+        if user == request.user:
+            return Response(
+                {'detail': 'Нельзя заблокировать собственную учётную запись.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user.is_active = bool(request.data.get('is_active', False))
+        user.save(update_fields=('is_active',))
+        return Response(self.get_serializer(user).data)
