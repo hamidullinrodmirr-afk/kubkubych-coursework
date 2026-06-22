@@ -1,5 +1,6 @@
 """Бизнес-операции над заказами: атомарное оформление, отмена, смена статуса."""
 
+import logging
 from decimal import Decimal
 
 from django.db import transaction
@@ -9,6 +10,17 @@ from rest_framework import serializers
 from cart.models import CartItem
 from .constants import ORDER_MAX_TOTAL, ORDER_MIN_TOTAL
 from .models import Order, OrderItem
+from .tasks import send_order_confirmation_email, send_order_status_email
+
+logger = logging.getLogger(__name__)
+
+
+def _enqueue(task, *args) -> None:
+    """Ставит задачу в очередь, не роняя запрос при недоступном брокере."""
+    try:
+        task.delay(*args)
+    except Exception as exc:  # noqa: BLE001 — брокер может быть выключен в dev-режиме
+        logger.warning('Не удалось поставить задачу %s в очередь: %s', task.name, exc)
 
 
 @transaction.atomic
@@ -61,6 +73,7 @@ def create_order_from_cart(user, data: dict) -> Order:
         product.save(update_fields=('stock', 'updated_at'))
 
     CartItem.objects.filter(user=user).delete()
+    transaction.on_commit(lambda: _enqueue(send_order_confirmation_email, order.id))
     return order
 
 
@@ -82,4 +95,5 @@ def change_order_status(order: Order, new_status: str) -> str:
     old_status = order.set_status(new_status)
     if new_status == Order.Status.CANCELLED:
         restore_stock(order)
+    transaction.on_commit(lambda: _enqueue(send_order_status_email, order.id, old_status, new_status))
     return old_status

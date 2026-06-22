@@ -156,7 +156,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '1025'))
 EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = 'noreply@kubkubych.ru'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'no-reply@kubkubych.ru')
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'admin@kubkubych.ru')
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
@@ -172,7 +173,20 @@ CELERY_BROKER_CONNECTION_RETRY = False
 CELERY_BROKER_CONNECTION_MAX_RETRIES = 0
 CELERY_BROKER_TRANSPORT_OPTIONS = {'socket_connect_timeout': 2, 'socket_timeout': 2}
 
-CELERY_BEAT_SCHEDULE = {}
+CELERY_BEAT_SCHEDULE = {
+    'auto-cancel-stale-orders': {
+        'task': 'orders.tasks.auto_cancel_stale_orders',
+        'schedule': crontab(minute=0),  # каждый час
+    },
+    'daily-sales-report': {
+        'task': 'orders.tasks.send_daily_sales_report',
+        'schedule': crontab(hour=23, minute=0),  # каждый день в 23:00
+    },
+    'low-stock-report': {
+        'task': 'orders.tasks.send_low_stock_report',
+        'schedule': crontab(hour=9, minute=0),  # каждый день в 09:00
+    },
+}
 
 if TESTING:
     CELERY_TASK_ALWAYS_EAGER = True
