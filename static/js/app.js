@@ -148,6 +148,8 @@ async function addToCart(productId, quantity = 1) {
     }
 }
 
+const HEART_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 20.6C6.8 17 3.4 13.7 3.4 9.8 3.4 7.3 5.3 5.4 7.8 5.4c1.5 0 2.9.7 3.8 1.9.9-1.2 2.3-1.9 3.8-1.9 2.5 0 4.4 1.9 4.4 4.4 0 3.9-3.4 7.2-8.6 10.8z" fill="currentColor"/></svg>';
+
 // Единый HTML карточки набора для главной, каталога и избранного.
 function productCard(p) {
     const priceBlock = p.discount_percent > 0
@@ -170,7 +172,7 @@ function productCard(p) {
             <div class="card__footer">
                 <div class="card__price">${priceBlock}</div>
                 <div class="card__actions">
-                    <button class="icon-btn fav-btn ${favClass}" onclick="toggleFavorite(${p.id}, this)">${favText}</button>
+                    <button class="icon-btn fav-btn ${favClass}" data-icon="1" aria-label="${favText}" title="${favText}" onclick="toggleFavorite(${p.id}, this)">${HEART_ICON}</button>
                     <button class="btn btn--sm btn--green" onclick="addToCart(${p.id})" ${p.in_stock ? '' : 'disabled'}>В корзину</button>
                 </div>
             </div>
@@ -190,7 +192,9 @@ async function toggleFavorite(productId, button) {
         : await API.post(`/products/${productId}/favorite/`);
     if (response && response.ok) {
         button.classList.toggle('is-active', !active);
-        button.textContent = !active ? 'В избранном' : 'В избранное';
+        if (!button.dataset.icon) {
+            button.textContent = !active ? 'В избранном' : 'В избранное';
+        }
     } else {
         showAlert(document.body, 'Войдите, чтобы пользоваться избранным', 'error');
     }
