@@ -20,6 +20,8 @@ class CartItem(models.Model):
     class Meta:
         constraints = [models.UniqueConstraint(fields=('user', 'product'), name='unique_cart_product')]
         ordering = ('-updated_at',)
+        verbose_name = 'позиция корзины'
+        verbose_name_plural = 'позиции корзины'
 
     def __str__(self) -> str:
         return f'{self.product} × {self.quantity}'

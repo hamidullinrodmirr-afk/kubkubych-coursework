@@ -39,6 +39,8 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'django_filters',
+    'import_export',
+    'simple_history',
     'corsheaders',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -63,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 SILKY_ENABLED = DEBUG and not TESTING
@@ -71,6 +74,11 @@ if SILKY_ENABLED:
     MIDDLEWARE.append('silk.middleware.SilkyMiddleware')
     SILKY_PYTHON_PROFILER = True
     SILKY_MAX_RECORDED_REQUESTS = 1000
+
+if DEBUG and not TESTING:
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    INTERNAL_IPS = ['127.0.0.1']
 
 ROOT_URLCONF = 'kubkubych.urls'
 
@@ -123,6 +131,13 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'kubkubych-local-cache',
+    }
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

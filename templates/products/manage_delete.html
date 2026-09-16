@@ -1,0 +1,3 @@
+{% extends 'base.html' %}
+{% block title %}Удалить набор — КубКубыч{% endblock %}
+{% block content %}<section class="section"><div class="container auth-wrap"><div class="form-section"><h1>Удалить набор</h1><p>Удалить «{{ product.name }}»? Это действие нельзя отменить.</p><form method="post">{% csrf_token %}<button class="btn btn--green" type="submit">Удалить</button> <a href="{% url 'product-manage-list' %}">Отмена</a></form></div></div></section>{% endblock %}

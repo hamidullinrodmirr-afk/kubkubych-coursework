@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
+from django.urls import reverse
+from simple_history.models import HistoricalRecords
 
 from .constants import DEFAULT_CATEGORY_MAX_DISCOUNT, MAX_DISCOUNT_PERCENT
 
@@ -57,10 +59,19 @@ class Product(models.Model):
     )
     stock = models.PositiveIntegerField('Остаток на складе', default=0)
     image = models.ImageField('Изображение', upload_to='products/', blank=True, null=True)
+    specification_file = models.FileField('Спецификация', upload_to='product-specifications/', blank=True)
     image_url = models.URLField('Ссылка на изображение', blank=True)
     is_active = models.BooleanField('Показывать в каталоге', default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    favorited_by_users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through='Favorite',
+        related_name='favorite_products',
+        blank=True,
+        verbose_name='Добавили в избранное',
+    )
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ('name',)
@@ -111,7 +122,7 @@ class Product(models.Model):
         return self.stock > 0
 
     def get_absolute_url(self) -> str:
-        return f'/products/{self.slug}/'
+        return reverse('product-detail', kwargs={'slug': self.slug})
 
 
 class Favorite(models.Model):

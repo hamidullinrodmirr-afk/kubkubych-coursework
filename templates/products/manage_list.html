@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Управление наборами — КубКубыч{% endblock %}
+{% block content %}<section class="section"><div class="container"><div class="section__header"><h1>Управление наборами</h1><p>Служебная страница для администратора магазина.</p><a class="btn btn--green" href="{% url 'product-manage-create' %}">Добавить набор</a></div>
+{% for message in messages %}<p class="form-message form-message--success">{{ message }}</p>{% endfor %}
+<div class="order-list">{% for product in products %}<article class="order-card"><div><b>{{ product.name }}</b><span>{{ product.article }} · {{ product.category.name }} · {{ product.price }} ₽</span></div><div class="order-card__right"><a href="{% url 'product-manage-update' product.pk %}">Изменить</a><a href="{% url 'product-manage-delete' product.pk %}">Удалить</a></div></article>{% empty %}<p>Нет активных наборов.</p>{% endfor %}</div>
+{% if products.paginator.num_pages > 1 %}<nav class="pagination" aria-label="Страницы управления">{% if products.has_previous %}<a href="?page={{ products.previous_page_number }}">Назад</a>{% endif %}<span>Страница {{ products.number }} из {{ products.paginator.num_pages }}</span>{% if products.has_next %}<a href="?page={{ products.next_page_number }}">Вперёд</a>{% endif %}</nav>{% endif %}</div></section>{% endblock %}

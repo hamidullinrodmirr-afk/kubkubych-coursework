@@ -35,6 +35,7 @@ urlpatterns = [
     path('login/', views.LoginView.as_view(), name='login'),
     path('register/', views.RegisterView.as_view(), name='register'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('manage/products/', include('products.site_urls')),
     path('login/callback/', views.OAuthCallbackView.as_view(), name='oauth-callback'),
 ]
 
@@ -43,3 +44,6 @@ if settings.DEBUG:
 
 if getattr(settings, 'SILKY_ENABLED', False):
     urlpatterns.append(path('silk/', include('silk.urls', namespace='silk')))
+
+if settings.DEBUG and not getattr(settings, 'TESTING', False):
+    urlpatterns.append(path('__debug__/', include('debug_toolbar.urls')))

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
+from simple_history.models import HistoricalRecords
 
 from .constants import ORDER_MAX_TOTAL, ORDER_MIN_TOTAL, ORDER_NUMBER_PREFIX, POSTAL_CODE_LENGTH
 
@@ -62,6 +63,7 @@ class Order(models.Model):
     paid_at = models.DateTimeField('Оплачен', null=True, blank=True)
     delivered_at = models.DateTimeField('Доставлен', null=True, blank=True)
     cancelled_at = models.DateTimeField('Отменён', null=True, blank=True)
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ('-created_at',)
