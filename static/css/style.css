@@ -458,3 +458,15 @@ select.form-control {
     .catalog-toolbar { grid-template-columns: 1fr; }
     .catalog-toolbar .search-input, .catalog-toolbar #find { grid-column: span 1; }
 }
+
+@media print {
+    @page { margin: 18mm; }
+    body { color: #000; background: #fff; font-family: Arial, sans-serif; }
+    .header, .footer, .header__actions, .header__burger, .btn, .home-search, .cart-row__remove,
+    .product-detail__actions, .review-form, .alert { display: none !important; }
+    a { color: #000; text-decoration: none; }
+    .section { padding: 0; }
+    .product-detail, .order-detail__grid { display: block; }
+    .product-detail__media img { max-width: 110mm; }
+    .product-detail__info, .order-detail__items, .order-detail__info { break-inside: avoid; }
+}

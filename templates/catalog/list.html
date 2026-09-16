@@ -9,7 +9,7 @@
         </div>
 
         <div class="catalog-toolbar">
-            <input id="search" class="search-input" placeholder="Название, артикул или описание">
+            <input id="search" class="search-input" placeholder="Название, артикул или описание" value="{{ request.GET.search|default:'' }}">
             <select id="category" class="form-control"><option value="">Все серии</option></select>
             <input id="min_price" class="form-control" type="number" min="0" placeholder="Цена от">
             <input id="max_price" class="form-control" type="number" min="0" placeholder="Цена до">

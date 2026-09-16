@@ -7,10 +7,15 @@
                 <span class="eyebrow">Конструкторы LEGO</span>
                 <h1>Собирай.<br>Придумывай.<br>Вдохновляйся.</h1>
                 <p>«{{ site.shop_name|default:'КубКубыч' }}» — магазин конструкторов LEGO для детей, семейных вечеров и взрослых коллекционеров. В каталоге реальные наборы популярных серий с актуальной ценой и остатком.</p>
-                <div class="hero__cta">
-                    <a href="/catalog/" class="btn btn--green">Выбрать набор</a>
-                    <a href="/mission/" class="btn btn--outline">О проекте</a>
-                </div>
+            <div class="hero__cta">
+                <a href="/catalog/" class="btn btn--green">Выбрать набор</a>
+                <a href="/mission/" class="btn btn--outline">О проекте</a>
+            </div>
+            <form class="home-search" action="/catalog/" method="get" role="search">
+                <label for="home-search">Найти набор</label>
+                <input id="home-search" name="search" type="search" placeholder="Название или артикул">
+                <button class="btn btn--green" type="submit">Найти</button>
+            </form>
             </div>
         </div>
     </div>
