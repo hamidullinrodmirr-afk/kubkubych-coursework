@@ -1,10 +1,30 @@
-# Лабораторная 7 Django 5
+# Лабораторная работа 7 Django 5
 
-Код демонстрирует chaining QuerySet, `__icontains`, срезы, values, values_list, count, exists, update и delete. Связь Product–User через Favorite выражена как ManyToManyField с `through='Favorite'`. Django-форма ProductForm содержит Textarea, `cleaned_data`, параметры полей и class Media.
+## Цель
 
-## Что показать
+Показать работу QuerySet, связь M:N через промежуточную модель и расширенные свойства формы Django.
 
-- [СКРИНШОТ] ProductForm и ошибки полей;
-- [СКРИНШОТ] модель связи Favorite;
-- [СКРИНШОТ] поиск по каталогу;
-- [СКРИНШОТ] код ProductForm и ProductViewSet.
+## Подтверждённые запросы
+
+| Возможность | Место в проекте |
+| --- | --- |
+| цепочки QuerySet | `ProductViewSet.get_queryset()` и `orders/services.py` |
+| `icontains` | фильтры каталога и пользователей |
+| срез | популярные и скидочные наборы `[:POPULAR_PRODUCTS_LIMIT]` |
+| `values`, агрегации | `analytics/services.py`, `orders/tasks.py` |
+| `values_list` | адресаты писем и избранные товары |
+| `count`, `exists` | номер заказа, проверки пользователя и настроек |
+| `update`, `delete` | модерация отзывов, очистка корзины, удаление избранного |
+
+`Product.favorited_by_users` задаёт M:N с `User` через `Favorite`. В `ProductForm` есть `Textarea`, обработка `cleaned_data`, сообщения ошибок, labels, help_texts, widgets и внутренний класс `Media`.
+
+## Сценарий демонстрации
+
+1. Открыть форму добавления набора и показать виджет описания, подсказку файла и ошибку артикула.
+2. Открыть `Favorite` и соответствующее `ManyToManyField` в модели.
+3. Выполнить поиск по каталогу и показать полученную выборку.
+4. Показать один из перечисленных QuerySet в исходном коде с его результатом в интерфейсе или API.
+
+## Открытая часть
+
+Оператор `contains` как отдельный пример запроса не был подтверждён при проверке. Если он обязателен по формулировке задания, нужно добавить и показать отдельный безопасный пример.
